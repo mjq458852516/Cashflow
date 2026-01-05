@@ -36,6 +36,7 @@
         }
 
         /* --- iPhone 适配核心修复开始 --- */
+        /* 手动定义安全区域，修复刘海和底部Home条遮挡 */
         .pt-safe-top {
             padding-top: 20px; /* Fallback */
             padding-top: constant(safe-area-inset-top);
@@ -66,11 +67,16 @@
             .tile-down { background: #3b0764 !important; color: #c084fc !important; border-color: #581c87 !important; }
         }
 
+        html {
+            background-color: var(--ios-bg);
+        }
+
         body { 
             background-color: var(--ios-bg); 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; 
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            /* 关键修改：移除 padding-bottom，由布局类控制 */
             color: #1c1c1e;
             overflow: hidden; 
         }
@@ -193,14 +199,34 @@
         }
         @media (prefers-color-scheme: dark) { #input-qty-field { color: white; } }
         #input-qty-field:focus { border-bottom-color: var(--ios-blue); }
-        
+
+
         #modal-overlay { 
             z-index: 60 !important; 
             background-color: rgba(0, 0, 0, 0.4); 
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-        } 
-        @media (prefers-color-scheme: dark) {
+
+            /* iOS Safari：避免关闭弹窗时顶部“闪一下”的重绘闪烁 */
+            opacity: 1;
+            will-change: opacity;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        /* 淡出时只处理 opacity，避免 display:none 触发整页重排/闪屏 */
+        #modal-overlay.overlay-fade {
+            opacity: 0;
+            pointer-events: none;
+        }
+        /* 淡出结束后再隐藏，防止点击穿透 & 保持动画流畅 */
+        #modal-overlay.overlay-hidden {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+@media (prefers-color-scheme: dark) {
             #modal-overlay { background-color: rgba(0, 0, 0, 0.65); }
         }
     </style>
@@ -261,7 +287,7 @@
         </div>
     </div>
 
-    <div id="modal-overlay" class="fixed inset-0 hidden flex items-end sm:items-center justify-center transition-opacity duration-300">
+    <div id="modal-overlay" class="fixed inset-0 flex items-end sm:items-center justify-center transition-opacity duration-300 overlay-fade overlay-hidden">
         
         <div id="card-modal" class="glass w-full sm:w-[380px] sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl hidden relative pb-safe-bottom hardware-accel">
             
@@ -639,7 +665,8 @@
                 if (this.isMoving) return;
                 
                 const overlay = document.getElementById('modal-overlay');
-                if ((!overlay.classList.contains('hidden')) || overlay.style.display === 'flex') {
+                // 弹窗存在（显示或正在淡出）时，不允许掷骰子，避免 iOS 叠层闪烁
+                if (!overlay.classList.contains('overlay-hidden')) {
                     return;
                 }
 
@@ -981,7 +1008,8 @@
                 if (this.state.eventQueue.length === 0) return;
                 
                 const overlay = document.getElementById('modal-overlay');
-                if (!overlay.classList.contains('hidden') || overlay.style.display !== 'none') return; 
+                // 弹窗显示中（或正在淡出）则不抢占 UI
+                if (!overlay.classList.contains('overlay-hidden')) return; 
 
                 const nextEvent = this.state.eventQueue.shift();
                 
@@ -1241,16 +1269,12 @@
                     this.log(`💸 支付 $${card.cost}`);
                 }
 
-                // 优化：将 UI 更新放入回调，确保弹窗关闭动画完成后再执行
-                // 解决：闪烁问题和键盘导致的布局抖动
+                this.checkWinCondition();
+                this.updateUI();
+                
+                // 修复：如果游戏结束（已胜利），不要关闭弹窗，以免胜利画面一闪而过导致卡死
                 if (!this.state.isGameOver) {
-                    this.closeModal(() => {
-                        this.checkWinCondition();
-                        this.updateUI();
-                    });
-                } else {
-                    this.checkWinCondition();
-                    this.updateUI();
+                    this.closeModal();
                 }
             },
 
@@ -1363,41 +1387,36 @@
 
             openOverlay(id) {
                 const overlay = document.getElementById('modal-overlay');
-                overlay.classList.remove('hidden');
-                overlay.style.display = 'flex';
-                
+
+                // 先让容器可见，再在下一帧移除 fade，保证 iOS 上过渡不闪烁
+                overlay.classList.remove('overlay-hidden');
+                // 强制一次 reflow，确保 visibility 已生效
+                overlay.getBoundingClientRect();
+                requestAnimationFrame(() => overlay.classList.remove('overlay-fade'));
+
                 ['card-modal','choice-modal','game-over-modal'].forEach(i => document.getElementById(i).classList.add('hidden'));
-                
+
                 const target = document.getElementById(id);
-                target.classList.remove('hidden', 'shake-anim'); 
+                target.classList.remove('hidden', 'shake-anim');
                 target.classList.add('modal-enter');
             },
-            
-            closeModal(onClosed) { // 增加 onClosed 回调参数
-                // 1. 强制手机端失去焦点，防止键盘收起导致的布局跳动
-                if (document.activeElement) {
-                    document.activeElement.blur();
-                }
 
+            closeModal() {
                 const overlay = document.getElementById('modal-overlay');
-                overlay.classList.add('opacity-0'); 
-                
+
+                // 先淡出（不切 display），避免 iOS 顶部闪一下
+                overlay.classList.add('overlay-fade');
+
                 if (uiTimer) clearTimeout(uiTimer);
-                
+
                 uiTimer = setTimeout(() => {
-                    overlay.classList.add('hidden'); 
-                    overlay.style.display = 'none';
-                    overlay.classList.remove('opacity-0');
+                    // 淡出结束后再隐藏（visibility），并清理卡片状态
+                    overlay.classList.add('overlay-hidden');
                     this.state.currentCard = null;
-
-                    // 2. 在弹窗彻底消失后，再执行回调（如更新UI），避免渲染冲突
-                    if (onClosed && typeof onClosed === 'function') {
-                        onClosed();
-                    }
-
                     this.processQueue();
-                }, 300); // 3. 修正：将时间改为300ms，以匹配CSS中的 duration-300，避免动画截断闪烁
+                }, 220);
             },
+
             updateUI() {
                 document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
                 document.getElementById('display-flow').innerText = '$' + this.monthlyFlow.toLocaleString();
