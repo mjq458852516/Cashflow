@@ -35,7 +35,7 @@
             --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
         }
 
-        /* --- iPhone 适配核心修复开始 --- */
+        /* --- iPhone 适配核心修复 --- */
         .pt-safe-top {
             padding-top: 20px; 
             padding-top: constant(safe-area-inset-top);
@@ -46,7 +46,6 @@
             padding-bottom: constant(safe-area-inset-bottom);
             padding-bottom: env(safe-area-inset-bottom);
         }
-        /* --- iPhone 适配核心修复结束 --- */
 
         @media (prefers-color-scheme: dark) {
             :root {
@@ -288,7 +287,7 @@
                     <button onclick="game.adjustShares(-100)" class="stepper-btn text-slate-400">-</button>
                     <div class="text-center min-w-[80px]">
                         <div class="text-[10px] text-slate-400 uppercase font-bold mb-0.5">数量 (手/股)</div>
-                        <input type="number" id="input-qty-field" value="100" step="10" oninput="game.manualInputShares(this.value)">
+                        <input type="number" id="input-qty-field" value="0" step="10" oninput="game.manualInputShares(this.value)">
                     </div>
                     <button onclick="game.adjustShares(100)" class="stepper-btn text-blue-600">+</button>
                  </div>
@@ -506,7 +505,6 @@
                 { type: 'Buyer', target: '2室1厅 公寓', price: 65000, desc: '投资客出价 $65k 收购所有2室1厅公寓。' },
                 { type: 'Buyer', target: '4单元 公寓', price: 220000, desc: '公寓市场回暖。买家出价 $220k。' },
                 { type: 'Inflation', desc: '通货膨胀！所有消费品价格上涨。' },
-                // 新增事件：金币和软件公司
                 { type: 'Buyer', target: '金币收藏', price: 1000, desc: '金价暴涨！收藏家急寻克鲁格金币，出价 $1,000。' },
                 { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！你的原始股价值飙升至 $250,000！' }
             ],
@@ -536,7 +534,7 @@
                 passive: 0,
                 childCount: 0,
                 currentCard: null,
-                inputQty: 100, 
+                inputQty: 0, 
                 currentTab: 'paper',
                 downsizedTurns: 0, 
                 charityTurns: 0, 
@@ -658,9 +656,7 @@
                         if (confirm(`⚠️ 现金赤字 $${debt.toLocaleString()}！\n\n您目前没有可变卖的资产，必须向银行借款才能继续游戏。\n\n点击【确定】自动借入所需金额。`)) {
                              const borrowAmt = Math.ceil(debt / 1000) * 1000;
                              this.manageLoan(borrowAmt);
-                             // 借完款后再检查一次是否存活
                              if (this.state.isGameOver) return; 
-                             // 如果活着但 flow 负，可能在 payday 挂掉，但允许继续
                         } else {
                             return;
                         }
@@ -744,7 +740,6 @@
                     if (!tiles[newIndex].querySelector('.player-token')) {
                         tiles[newIndex].innerHTML += `<div class="player-token"></div>`;
                     }
-                    // 滚动视图
                     setTimeout(() => tiles[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
                 }
             },
@@ -769,13 +764,10 @@
                 
                 if (this.state.cash < 0) {
                    const debt = Math.abs(this.state.cash);
-                   
-                   // 核心修复：检查如果借贷来填补亏空，是否会导致月现金流为负（即彻底破产）
                    const requiredLoan = Math.ceil(debt / 1000) * 1000;
                    const interestForLoan = requiredLoan * 0.1;
                    const projectedFlow = this.monthlyFlow - interestForLoan;
 
-                   // 如果没有资产，且现金流已经是负的（或者借款后会变成负的），则破产
                    if (liquidAssets.length === 0 && projectedFlow < 0) {
                        document.getElementById('end-icon').innerText = '☠️';
                        document.getElementById('end-title').innerText = "破产清算";
@@ -785,7 +777,6 @@
                        this.renderDiceControls(); 
                    } else {
                        this.log(`⚠️ 现金赤字 $${debt}，请变卖资产或借贷`, true);
-                       // 只有当报表未打开时才自动打开，避免频繁打断操作
                        if (document.getElementById('sheet-modal').classList.contains('hidden')) {
                             setTimeout(() => {
                                 this.toggleSheet(); 
@@ -889,7 +880,6 @@
                 this.updateUI();
                 this.renderSheet('debt');
                 
-                // 修复：借款/还款后检查生存状态
                 this.checkBankruptcy();
             },
 
@@ -969,7 +959,6 @@
                 this.updateUI();
                 this.renderSheet('paper');
                 
-                // 修复：卖完资产立刻检查是否还活着
                 if (this.state.cash < 0) {
                     this.checkBankruptcy();
                 }
@@ -999,6 +988,7 @@
                 if (this.state.eventQueue.length === 0) return;
                 
                 const overlay = document.getElementById('modal-overlay');
+                // Ensure queue processing doesn't overlap with an active modal
                 if (!overlay.classList.contains('hidden') || overlay.style.display !== 'none') return; 
 
                 const nextEvent = this.state.eventQueue.shift();
@@ -1093,7 +1083,10 @@
                 if (uiTimer) clearTimeout(uiTimer);
 
                 this.state.currentCard = { ...data, actionType: type };
-                this.state.inputQty = 100; 
+                
+                // --- FIX: Default quantity to 0 ---
+                this.state.inputQty = 0; 
+                document.getElementById('input-qty-field').value = 0;
                 
                 this.openOverlay('card-modal');
                 
@@ -1365,33 +1358,48 @@
                 }
             },
 
+            // --- FIXED: openOverlay with reflow trick ---
             openOverlay(id) {
                 const overlay = document.getElementById('modal-overlay');
+                
+                // 1. Make it visible in layout first (but still transparent if it was opacity-0)
                 overlay.classList.remove('hidden');
                 overlay.style.display = 'flex';
                 
+                // 2. Hide other modals
                 ['card-modal','choice-modal','game-over-modal'].forEach(i => document.getElementById(i).classList.add('hidden'));
                 
+                // 3. Show target modal
                 const target = document.getElementById(id);
                 target.classList.remove('hidden', 'shake-anim'); 
                 target.classList.add('modal-enter');
+
+                // 4. Force reflow for transition to work on iOS
+                void overlay.offsetWidth;
+
+                // 5. Fade in
+                overlay.classList.remove('opacity-0');
             },
+
+            // --- FIXED: closeModal keeps opacity-0 until fully hidden ---
             closeModal() {
                 const overlay = document.getElementById('modal-overlay');
+                // 1. Fade out
                 overlay.classList.add('opacity-0'); 
                 
                 if (uiTimer) clearTimeout(uiTimer);
                 
-                // 修复：将 timeout 设置为 320ms，略大于 CSS transition duration (300ms)
-                // 之前是 200ms，导致动画没播完就 display:none，引起闪烁
+                // 2. Wait for transition, then hide
                 uiTimer = setTimeout(() => {
                     overlay.classList.add('hidden'); 
                     overlay.style.display = 'none';
-                    overlay.classList.remove('opacity-0');
+                    // NOTE: Do not remove 'opacity-0' here. Leave it for the next open call.
+                    
                     this.state.currentCard = null;
                     this.processQueue();
                 }, 320);
             },
+
             updateUI() {
                 document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
                 document.getElementById('display-flow').innerText = '$' + this.monthlyFlow.toLocaleString();
