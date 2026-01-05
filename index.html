@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Cashflow: Classic Rat Race</title>
+    <title>Cashflow: Rat Race</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,8 +14,11 @@
                         dark: {
                             bg: '#000000',
                             card: '#1C1C1E',
-                            overlay: 'rgba(30, 30, 30, 0.7)'
+                            overlay: 'rgba(0, 0, 0, 0.8)'
                         }
+                    },
+                    screens: {
+                        'xs': '370px' // 针对 mini 机型优化
                     }
                 }
             }
@@ -24,33 +27,12 @@
     <style>
         .hidden { display: none !important; }
         
-        /* --- iOS 安全区域适配 (核心修复) --- */
-        .pt-safe-top {
-            padding-top: 20px; /* Fallback */
-            padding-top: constant(safe-area-inset-top);
-            padding-top: env(safe-area-inset-top);
-        }
-        
-        .pb-safe-bottom {
-            padding-bottom: 20px; /* Fallback */
-            padding-bottom: constant(safe-area-inset-bottom);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        /* 弹窗底部专用适配：基础 Padding + 安全距离 */
-        .pb-safe-modal {
-            padding-bottom: 2.5rem; /* Fallback */
-            padding-bottom: calc(1.5rem + constant(safe-area-inset-bottom));
-            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
-        }
-
         :root {
             --ios-bg: #F2F2F7;
-            --ios-card: rgba(255, 255, 255, 0.85);
-            --ios-card-dark: rgba(28, 28, 30, 0.85);
-            --ios-blur: 12px;
+            --ios-card: rgba(255, 255, 255, 0.9);
+            --ios-card-dark: rgba(28, 28, 30, 0.9);
+            --ios-blur: 20px;
             --ios-blue: #007AFF;
-            --ios-green: #34C759;
             --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
             --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
         }
@@ -58,8 +40,8 @@
         @media (prefers-color-scheme: dark) {
             :root {
                 --ios-bg: #000000;
-                --ios-card: rgba(28, 28, 30, 0.8); 
-                --ios-card-dark: rgba(28, 28, 30, 0.9);
+                --ios-card: rgba(28, 28, 30, 0.9); 
+                --ios-card-dark: rgba(28, 28, 30, 0.95);
                 --shadow-sm: 0 2px 8px rgba(0,0,0,0.5);
                 --shadow-lg: 0 12px 32px rgba(0,0,0,0.6);
             }
@@ -81,6 +63,15 @@
             padding-bottom: env(safe-area-inset-bottom);
             color: #1c1c1e;
             overflow: hidden; 
+        }
+
+        .pb-safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-bottom: constant(safe-area-inset-bottom);
+        }
+        .pt-safe-top {
+            padding-top: env(safe-area-inset-top);
+            padding-top: constant(safe-area-inset-top);
         }
 
         .hardware-accel {
@@ -111,7 +102,7 @@
         }
 
         @keyframes popUp { 
-            0% { transform: scale(0.95) translateY(10px); opacity: 0; } 
+            0% { transform: scale(0.95) translateY(20px); opacity: 0; } 
             100% { transform: scale(1) translateY(0); opacity: 1; } 
         }
         @keyframes shake {
@@ -122,14 +113,13 @@
             80% { transform: translateX(3px); }
         }
         .modal-enter { 
-            animation: popUp 0.3s cubic-bezier(0.19, 1, 0.22, 1) forwards; 
+            animation: popUp 0.35s cubic-bezier(0.19, 1, 0.22, 1) forwards; 
             will-change: transform, opacity; 
         }
         .shake-anim { animation: shake 0.4s ease-in-out; }
         
         .tap-effect { transition: transform 0.1s, opacity 0.1s; cursor: pointer; touch-action: manipulation; }
         .tap-effect:active { transform: scale(0.97); opacity: 0.8; }
-        .tap-effect:disabled { opacity: 0.5; transform: none; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -145,8 +135,7 @@
             align-items: center; justify-content: center; font-size: 10px; font-weight: 700;
             color: #1c1c1e; background: white; box-shadow: var(--shadow-sm);
             position: relative; text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease; 
-            will-change: transform; 
+            transition: transform 0.2s ease; 
         }
         .tile-icon { font-size: 22px; margin-bottom: 2px; }
         .tile.active {
@@ -165,7 +154,6 @@
             position: absolute; width: 14px; height: 14px; background: var(--ios-blue);
             border: 2px solid white; border-radius: 50%; top: -4px; right: -4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 20;
-            transition: all 0.2s ease;
         }
 
         .ios-segment { background: rgba(118, 118, 128, 0.24); border-radius: 9px; padding: 2px; display: flex; }
@@ -176,7 +164,7 @@
         .segment-btn.active { background: #636366; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
         
         .stepper-btn {
-            width: 36px; height: 36px; border-radius: 10px; background: white;
+            width: 32px; height: 32px; border-radius: 8px; background: white;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;
             font-size: 18px; font-weight: 600; color: var(--ios-blue);
         }
@@ -184,19 +172,9 @@
             .stepper-btn { background: #2c2c2e; color: #60a5fa; box-shadow: none; border: 1px solid #3a3a3c; }
         }
 
-        .loan-panel {
-            background: rgba(255,59,48, 0.15); border: 1px solid rgba(255,59,48, 0.2);
-            border-radius: 16px; padding: 16px; margin-bottom: 16px;
-        }
-        .debt-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px;
-            margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05);
-        }
-
         #input-qty-field {
-            background: transparent; font-size: 1.6rem; font-weight: 700; text-align: center;
-            width: 100px; color: #1e293b; outline: none; border-bottom: 2px solid transparent;
+            background: transparent; font-size: 1.4rem; font-weight: 700; text-align: center;
+            width: 80px; color: #1e293b; outline: none; border-bottom: 2px solid transparent;
             transition: border-color 0.2s;
         }
         @media (prefers-color-scheme: dark) { #input-qty-field { color: white; } }
@@ -206,7 +184,6 @@
             z-index: 60 !important; 
             background-color: rgba(0, 0, 0, 0.4); 
             backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
         } 
         @media (prefers-color-scheme: dark) {
             #modal-overlay { background-color: rgba(0, 0, 0, 0.65); }
@@ -217,36 +194,36 @@
 
     <div class="z-20 pt-safe-top">
         <div class="px-4 py-2">
-            <div id="top-panel" class="glass rounded-[28px] p-5 shadow-sm transition-all duration-300 hardware-accel">
-                <div class="flex justify-between items-center mb-4">
+            <div id="top-panel" class="glass rounded-[28px] p-4 shadow-sm transition-all duration-300 hardware-accel">
+                <div class="flex justify-between items-center mb-3">
                     <div class="flex items-center gap-2">
-                        <div id="game-phase-badge" class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white dark:text-black flex items-center justify-center text-white font-bold text-lg shadow-md">👷</div>
-                        <span id="game-phase-text" class="font-bold text-lg tracking-tight text-slate-800 dark:text-white">职业</span>
-                        </div>
-                    <button onclick="game.toggleSheet()" class="tap-effect px-3 py-1.5 bg-white/60 dark:bg-white/10 backdrop-blur rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1 border border-white/40 dark:border-white/10 shadow-sm">
-                        📊 资产 & 负债
+                        <div id="game-phase-badge" class="w-7 h-7 rounded-full bg-slate-900 dark:bg-white dark:text-black flex items-center justify-center text-white font-bold text-base shadow-md">👷</div>
+                        <span id="game-phase-text" class="font-bold text-base tracking-tight text-slate-800 dark:text-white">职业</span>
+                    </div>
+                    <button onclick="game.toggleSheet()" class="tap-effect px-3 py-1 bg-white/60 dark:bg-white/10 backdrop-blur rounded-full text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1 border border-white/40 dark:border-white/10 shadow-sm">
+                        📊 报表
                     </button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white/70 dark:bg-white/10 p-3.5 rounded-2xl border border-white/50 dark:border-white/5 shadow-sm">
+                    <div class="bg-white/70 dark:bg-white/10 p-3 rounded-2xl border border-white/50 dark:border-white/5 shadow-sm">
                         <div class="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wide">手头现金</div>
-                        <div class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight" id="display-cash">$0</div>
+                        <div class="text-xl font-bold text-slate-800 dark:text-white tracking-tight" id="display-cash">$0</div>
                     </div>
-                    <div class="bg-blue-50/90 dark:bg-blue-900/20 p-3.5 rounded-2xl border border-blue-100 dark:border-blue-800/50 relative overflow-hidden shadow-sm">
+                    <div class="bg-blue-50/90 dark:bg-blue-900/20 p-3 rounded-2xl border border-blue-100 dark:border-blue-800/50 relative overflow-hidden shadow-sm">
                         <div class="text-[10px] text-blue-400 font-bold uppercase tracking-wide">月现金流</div>
-                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400 tracking-tight" id="display-flow">$0</div>
-                        <div id="bankrupt-warn" class="absolute inset-0 bg-red-100/95 flex items-center justify-center text-red-600 font-bold text-xs hidden animate-pulse">⚠️ 赤字警报</div>
+                        <div class="text-xl font-bold text-blue-600 dark:text-blue-400 tracking-tight" id="display-flow">$0</div>
+                        <div id="bankrupt-warn" class="absolute inset-0 bg-red-100/95 flex items-center justify-center text-red-600 font-bold text-xs hidden animate-pulse">⚠️ 赤字</div>
                     </div>
                 </div>
 
-                <div class="mt-4 px-1">
-                    <div class="flex justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-1.5 font-medium">
-                        <span>被动收入: <strong id="display-passive" class="text-slate-600 dark:text-slate-300">$0</strong></span>
-                        <span>总支出: <strong id="display-expense" class="text-slate-600 dark:text-slate-300">$0</strong></span>
+                <div class="mt-3 px-1">
+                    <div class="h-2 w-full bg-slate-200/60 dark:bg-white/10 rounded-full overflow-hidden relative">
+                        <div id="progress-bar" class="h-full bg-gradient-to-r from-green-400 to-emerald-500 w-0 transition-all duration-700 ease-out"></div>
                     </div>
-                    <div class="h-2.5 w-full bg-slate-200/60 dark:bg-white/10 rounded-full overflow-hidden relative">
-                        <div id="progress-bar" class="h-full bg-gradient-to-r from-green-400 to-emerald-500 w-0 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(52,199,89,0.3)]"></div>
+                    <div class="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium">
+                        <span>被动: <strong id="display-passive" class="text-slate-600 dark:text-slate-300">$0</strong></span>
+                        <span>支出: <strong id="display-expense" class="text-slate-600 dark:text-slate-300">$0</strong></span>
                     </div>
                 </div>
             </div>
@@ -258,136 +235,137 @@
         <div class="h-40"></div> 
     </div>
 
-    <div class="fixed bottom-0 w-full glass rounded-t-[36px] shadow-[0_-8px_40px_rgba(0,0,0,0.08)] z-30 pb-safe-bottom hardware-accel">
-        <div class="p-5">
-            <div id="dice-controls" class="flex gap-3 h-14">
+    <div class="fixed bottom-0 w-full glass rounded-t-[32px] shadow-[0_-8px_40px_rgba(0,0,0,0.08)] z-30 hardware-accel">
+        <div class="pt-3 pb-safe-bottom">
+            <div class="flex justify-center mb-3 px-4">
+                <div id="log-capsule" class="bg-slate-100/90 dark:bg-[#2c2c2e]/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[11px] font-medium text-slate-500 dark:text-slate-400 max-w-full truncate transition-all border border-white/50 dark:border-white/5 shadow-sm text-center">
+                    准备开始...
                 </div>
+            </div>
 
-            <div class="mt-4 flex justify-center pb-1">
-                <div id="log-capsule" class="bg-slate-100/90 dark:bg-[#2c2c2e]/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[11px] font-medium text-slate-500 dark:text-slate-400 max-w-[90%] truncate transition-all border border-white/50 dark:border-white/5 shadow-sm">
-                    欢迎来到现金流游戏
-                </div>
+            <div class="px-5 pb-4">
+                <div id="dice-controls" class="flex gap-3 h-12"></div>
             </div>
         </div>
     </div>
 
     <div id="modal-overlay" class="fixed inset-0 hidden flex items-end sm:items-center justify-center transition-opacity duration-300">
         
-        <div id="card-modal" class="glass w-full sm:w-[380px] sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl hidden relative pb-safe-modal hardware-accel">
+        <div id="card-modal" class="glass w-full sm:w-[380px] sm:rounded-[36px] rounded-t-[36px] p-5 shadow-2xl hidden relative pb-safe-bottom max-h-[85vh] overflow-y-auto no-scrollbar hardware-accel">
             
-            <div class="absolute top-6 left-6 px-3 py-1.5 bg-green-100 dark:bg-green-900/40 rounded-full text-[11px] font-bold text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/30 flex items-center gap-1 z-10 shadow-sm">
+            <div class="absolute top-5 left-5 px-2.5 py-1 bg-green-100 dark:bg-green-900/40 rounded-full text-[10px] font-bold text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/30 flex items-center gap-1 z-10 shadow-sm">
                 💵 <span id="modal-cash-display">$0</span>
             </div>
 
-            <button onclick="game.quickLoan()" class="absolute top-6 right-6 px-3 py-1.5 bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-[#3a3a3c] rounded-full text-[11px] font-bold text-slate-500 dark:text-slate-400 tap-effect flex items-center gap-1 z-10 border border-slate-200 dark:border-white/5 shadow-sm">
-                🏦 借/还
+            <button onclick="game.quickLoan()" class="absolute top-5 right-5 px-2.5 py-1 bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-[#3a3a3c] rounded-full text-[10px] font-bold text-slate-500 dark:text-slate-400 tap-effect flex items-center gap-1 z-10 border border-slate-200 dark:border-white/5 shadow-sm">
+                🏦 借贷
             </button>
 
-            <div class="flex justify-center -mt-16 mb-4">
-                <div id="card-icon-bg" class="bg-white dark:bg-[#2c2c2e] p-4 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-4xl border border-slate-50 dark:border-white/5">🏠</div>
+            <div class="flex justify-center -mt-14 mb-3">
+                <div id="card-icon-bg" class="bg-white dark:bg-[#2c2c2e] p-3 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.08)] text-3xl border border-slate-50 dark:border-white/5">🏠</div>
             </div>
             
-            <div class="text-center mb-6">
-                <div id="card-tag" class="inline-block px-2.5 py-0.5 bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-slate-400 text-[10px] font-bold rounded-md mb-2 uppercase tracking-wider">Type</div>
-                <h2 id="card-title" class="text-2xl font-bold text-slate-800 dark:text-white leading-tight">Title</h2>
-                <div id="card-desc" class="text-slate-500 dark:text-slate-400 text-sm mt-3 leading-relaxed px-2">Description.</div>
+            <div class="text-center mb-4">
+                <div id="card-tag" class="inline-block px-2 py-0.5 bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-slate-400 text-[10px] font-bold rounded-md mb-1.5 uppercase tracking-wider scale-90">Type</div>
+                <h2 id="card-title" class="text-xl font-bold text-slate-800 dark:text-white leading-tight">Title</h2>
+                <div id="card-desc" class="text-slate-500 dark:text-slate-400 text-xs mt-2 leading-relaxed px-2">Description.</div>
             </div>
 
-            <div id="input-area" class="mb-6 hidden">
-                 <div class="flex items-center justify-between bg-slate-50 dark:bg-[#2c2c2e] rounded-2xl p-3 border border-slate-100 dark:border-white/5">
+            <div id="input-area" class="mb-4 hidden">
+                 <div class="flex items-center justify-between bg-slate-50 dark:bg-[#2c2c2e] rounded-xl p-2 border border-slate-100 dark:border-white/5">
                     <button onclick="game.adjustShares(-100)" class="stepper-btn text-slate-400">-</button>
-                    <div class="text-center min-w-[80px]">
-                        <div class="text-[10px] text-slate-400 uppercase font-bold mb-0.5">数量 (手/股)</div>
+                    <div class="text-center min-w-[70px]">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold mb-0.5">数量</div>
                         <input type="number" id="input-qty-field" value="100" step="10" oninput="game.manualInputShares(this.value)">
                     </div>
                     <button onclick="game.adjustShares(100)" class="stepper-btn text-blue-600">+</button>
                  </div>
-                 <div class="flex justify-between items-center px-4 mt-2">
-                     <span class="text-xs text-slate-400 font-medium">单价: <span id="input-price-per">$0</span></span>
-                     <span class="text-xs text-slate-500 dark:text-slate-300 font-bold">总计: <span id="input-total" class="text-slate-800 dark:text-white">$0</span></span>
+                 <div class="flex justify-between items-center px-3 mt-1.5">
+                     <span class="text-[10px] text-slate-400 font-medium">单价: <span id="input-price-per">$0</span></span>
+                     <span class="text-[10px] text-slate-500 dark:text-slate-300 font-bold">总计: <span id="input-total" class="text-slate-800 dark:text-white">$0</span></span>
                  </div>
             </div>
 
-            <div id="card-financials" class="bg-slate-50/80 dark:bg-[#2c2c2e] rounded-2xl p-4 mb-6 space-y-2.5 text-sm hidden border border-slate-100 dark:border-white/5">
+            <div id="card-financials" class="bg-slate-50/80 dark:bg-[#2c2c2e] rounded-xl p-3 mb-4 space-y-1.5 text-xs hidden border border-slate-100 dark:border-white/5">
                 <div class="flex justify-between items-center"><span class="text-slate-400 font-medium" id="lbl-cost">成本</span><span class="font-bold text-slate-700 dark:text-slate-200" id="val-cost">$0</span></div>
                 <div class="flex justify-between items-center"><span class="text-slate-400 font-medium" id="lbl-down">首付</span><span class="font-bold text-blue-600 dark:text-blue-400" id="val-down">$0</span></div>
-                <div class="w-full h-px bg-slate-200 dark:bg-white/10 my-1"></div>
+                <div class="w-full h-px bg-slate-200 dark:bg-white/10 my-0.5"></div>
                 <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">月现金流</span><span class="font-bold text-green-600 dark:text-green-400" id="val-flow">+$0</span></div>
             </div>
 
-            <div class="flex gap-3">
-                <button id="btn-cancel" onclick="game.closeModal()" class="flex-1 py-3.5 bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-[#3a3a3c] text-slate-500 dark:text-slate-400 rounded-2xl font-bold tap-effect text-sm transition-colors">放弃</button>
-                <button onclick="game.confirmCardAction('SHORT')" id="btn-short-action" class="hidden flex-1 py-3.5 bg-red-50 dark:bg-red-900/20 text-red-500 border border-red-100 dark:border-red-900/30 rounded-2xl font-bold tap-effect text-sm">做空</button>
-                <button onclick="game.confirmCardAction('BUY')" id="btn-card-action" class="flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors">执行</button>
+            <div class="flex gap-2.5 pb-2">
+                <button id="btn-cancel" onclick="game.closeModal()" class="flex-1 py-3 bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-[#3a3a3c] text-slate-500 dark:text-slate-400 rounded-xl font-bold tap-effect text-xs transition-colors">放弃</button>
+                <button onclick="game.confirmCardAction('SHORT')" id="btn-short-action" class="hidden flex-1 py-3 bg-red-50 dark:bg-red-900/20 text-red-500 border border-red-100 dark:border-red-900/30 rounded-xl font-bold tap-effect text-xs">做空</button>
+                <button onclick="game.confirmCardAction('BUY')" id="btn-card-action" class="flex-[1.5] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-xs transition-colors">执行</button>
             </div>
         </div>
 
-        <div id="choice-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-6 shadow-2xl hidden pb-safe-modal dark:border dark:border-white/10 hardware-accel">
-            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 text-center">选择投资赛道</h3>
-            <p class="text-xs text-slate-400 text-center mb-6 px-4">小生意起步快但风险高，大生意稳定但门槛高。</p>
+        <div id="choice-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-5 shadow-2xl hidden pb-10 dark:border dark:border-white/10 hardware-accel">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 text-center">选择投资赛道</h3>
+            <p class="text-[10px] text-slate-400 text-center mb-4 px-4">小生意起步快，大生意收益稳。</p>
             
-            <div class="space-y-3">
-                <button onclick="game.chooseDeal('Small')" class="w-full p-4 rounded-2xl border bg-white/50 dark:bg-[#2c2c2e]/50 border-slate-100 dark:border-white/5 hover:border-blue-200 active:bg-blue-50 dark:active:bg-white/5 flex items-center justify-between tap-effect transition-all shadow-sm group">
+            <div class="space-y-2.5">
+                <button onclick="game.chooseDeal('Small')" class="w-full p-3.5 rounded-xl border bg-white/50 dark:bg-[#2c2c2e]/50 border-slate-100 dark:border-white/5 hover:border-blue-200 active:bg-blue-50 dark:active:bg-white/5 flex items-center justify-between tap-effect transition-all shadow-sm group">
                     <div class="text-left">
-                        <div class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-2xl group-active:scale-110 transition-transform">📉</span> 初级市场</div>
-                        <div class="text-xs text-slate-400 mt-1">股票 · 基金 · 小房产 (成本 $5k内)</div>
+                        <div class="font-bold text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-xl group-active:scale-110 transition-transform">📉</span> 初级市场</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">股票 · 基金 · 小房产 (成本 $5k内)</div>
                     </div>
-                    <div class="text-blue-500 text-sm font-bold">入门 ></div>
+                    <div class="text-blue-500 text-xs font-bold">入门 ></div>
                 </button>
-                <button onclick="game.chooseDeal('Big')" class="w-full p-4 rounded-2xl border bg-white/50 dark:bg-[#2c2c2e]/50 border-slate-100 dark:border-white/5 hover:border-purple-200 active:bg-purple-50 dark:active:bg-white/5 flex items-center justify-between tap-effect transition-all shadow-sm group">
+                <button onclick="game.chooseDeal('Big')" class="w-full p-3.5 rounded-xl border bg-white/50 dark:bg-[#2c2c2e]/50 border-slate-100 dark:border-white/5 hover:border-purple-200 active:bg-purple-50 dark:active:bg-white/5 flex items-center justify-between tap-effect transition-all shadow-sm group">
                     <div class="text-left">
-                        <div class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-2xl group-active:scale-110 transition-transform">🏢</span> 大生意</div>
-                        <div class="text-xs text-slate-400 mt-1">公寓 · 企业收购 (成本 $6k+)</div>
+                        <div class="font-bold text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-xl group-active:scale-110 transition-transform">🏢</span> 大生意</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">公寓 · 企业收购 (成本 $6k+)</div>
                     </div>
-                    <div class="text-purple-500 text-sm font-bold">进阶 ></div>
+                    <div class="text-purple-500 text-xs font-bold">进阶 ></div>
                 </button>
             </div>
-            <button onclick="game.closeModal()" class="w-full mt-6 py-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
+            <button onclick="game.closeModal()" class="w-full mt-4 py-2 text-slate-400 text-[10px] font-semibold">跳过此回合</button>
         </div>
 
         <div id="game-over-modal" class="glass w-[90%] sm:w-[360px] rounded-[32px] p-8 shadow-2xl hidden flex-col items-center text-center dark:border dark:border-white/10 hardware-accel">
             <div class="text-6xl mb-4" id="end-icon">☠️</div>
             <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2" id="end-title">游戏结束</h2>
             <p class="text-slate-500 text-sm mb-6" id="end-desc">描述</p>
-            <button onclick="location.reload()" class="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold shadow-lg shadow-slate-300 dark:shadow-none tap-effect">重新开始</button>
+            <button onclick="location.reload()" class="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl font-bold shadow-lg shadow-slate-300 dark:shadow-none tap-effect">重新开始</button>
         </div>
     </div>
 
     <div id="sheet-modal" class="fixed inset-0 z-[70] hidden flex-col justify-end">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onclick="game.toggleSheet()"></div>
-        <div class="glass-dark w-full h-[92vh] rounded-t-[32px] p-6 relative flex flex-col modal-enter shadow-[0_-10px_40px_rgba(0,0,0,0.5)]" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white tracking-tight">财务报表</h2>
-                <button onclick="game.toggleSheet()" class="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center tap-effect hover:bg-white/20">✕</button>
+        <div class="glass-dark w-full h-[92vh] rounded-t-[32px] p-5 relative flex flex-col modal-enter shadow-[0_-10px_40px_rgba(0,0,0,0.5)]" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-white tracking-tight">财务报表</h2>
+                <button onclick="game.toggleSheet()" class="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center tap-effect hover:bg-white/20">✕</button>
             </div>
 
-            <div class="ios-segment mb-6">
+            <div class="ios-segment mb-4">
                 <div class="segment-btn active" onclick="game.switchTab('paper', this)">投资组合</div>
                 <div class="segment-btn" onclick="game.switchTab('debt', this)">负债管理</div>
             </div>
 
-            <div id="panel-invest" class="flex-1 overflow-y-auto space-y-3 pb-safe-bottom">
+            <div id="panel-invest" class="flex-1 overflow-y-auto space-y-2 pb-safe-bottom">
                  <div id="sheet-content"></div>
             </div>
 
-            <div id="panel-debt" class="flex-1 overflow-y-auto hidden space-y-4 pb-safe-bottom">
-                <div class="loan-panel flex justify-between items-center text-white mb-2">
+            <div id="panel-debt" class="flex-1 overflow-y-auto hidden space-y-3 pb-safe-bottom">
+                <div class="loan-panel flex justify-between items-center text-white mb-1">
                     <div>
                         <div class="text-[10px] text-red-300 font-bold uppercase">银行急用贷 (10%月息)</div>
-                        <div class="text-xl font-bold" id="sheet-loan">$0</div>
-                        <div class="text-[10px] opacity-60">月利息支出: <span id="sheet-interest">$0</span></div>
+                        <div class="text-lg font-bold" id="sheet-loan">$0</div>
+                        <div class="text-[10px] opacity-60">利息: <span id="sheet-interest">$0</span></div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="game.manageLoan(-1000)" class="px-3 py-1.5 bg-white/10 rounded-lg text-xs font-bold active:bg-white/20 border border-white/5">还款</button>
-                        <button onclick="game.manageLoan(1000)" class="px-3 py-1.5 bg-red-500 rounded-lg text-xs font-bold active:bg-red600 shadow-md shadow-red-900/30">借款</button>
+                        <button onclick="game.manageLoan(-1000)" class="px-3 py-1 bg-white/10 rounded-lg text-[10px] font-bold active:bg-white/20 border border-white/5">还款</button>
+                        <button onclick="game.manageLoan(1000)" class="px-3 py-1 bg-red-500 rounded-lg text-[10px] font-bold active:bg-red600 shadow-md shadow-red-900/30">借款</button>
                     </div>
                 </div>
 
-                <div class="text-[11px] text-white/40 uppercase font-bold px-1">生活负债 (还清以减少支出)</div>
+                <div class="text-[10px] text-white/40 uppercase font-bold px-1">生活负债</div>
                 <div id="liabilities-list" class="space-y-2"></div>
             </div>
             
-            <div class="pt-4 border-t border-white/10 flex justify-between text-xs text-white/40 font-medium">
+            <div class="pt-3 border-t border-white/10 flex justify-between text-[10px] text-white/40 font-medium">
                 <span>工资: $<span id="sheet-salary">0</span></span>
                 <span>孩子: <span id="sheet-kids" class="text-white">0</span> (支出 $<span id="sheet-kid-cost">0</span>)</span>
             </div>
@@ -490,34 +468,33 @@
             ],
 
             smallDeals: [
-                { name: 'MYT4U 电子', symbol:'MYT4U', type: 'Stock', cost: 10, range: '$5-$30', desc: '股价 $10。长期在$5到$30之间波动。', icon: '📉', allowShort: false },
-                { name: 'OK4U 医药', symbol:'OK4U', type: 'Stock', cost: 40, range: '$5-$40', desc: '股价 $40，处于历史高位。', icon: '⛰️', allowShort: false },
-                { name: 'ON2U 娱乐', symbol:'ON2U', type: 'Stock', cost: 5, range: '$5-$40', desc: '便士股票！价格仅为 $5，风险低，回报可能极高。', icon: '🚀', allowShort: false },
-                { name: '优先股分红', type: 'Asset', cost: 1200, down: 1200, flow: 10, desc: '电力公司优先股，提供稳定的10%年化回报。', icon: '📜' },
+                { name: 'MYT4U 电子', symbol:'MYT4U', type: 'Stock', cost: 10, range: '$5-$30', desc: '股价 $10。长期在$5-$30波动。', icon: '📉', allowShort: false },
+                { name: 'OK4U 医药', symbol:'OK4U', type: 'Stock', cost: 40, range: '$5-$40', desc: '股价 $40，历史高位。', icon: '⛰️', allowShort: false },
+                { name: 'ON2U 娱乐', symbol:'ON2U', type: 'Stock', cost: 5, range: '$5-$40', desc: '便士股 $5，高风险高回报。', icon: '🚀', allowShort: false },
+                { name: '优先股分红', type: 'Asset', cost: 1200, down: 1200, flow: 10, desc: '电力公司优先股，10%年化回报。', icon: '📜' },
                 { name: '银行定期存单', type: 'Asset', cost: 4000, down: 4000, flow: 20, desc: '低风险CD存单。', icon: '🏦' },
-                { name: '2室1厅 公寓', type: 'RealEstate', cost: 45000, down: 4000, flow: 180, desc: '法拍屋。首付仅需$4000，ROI高达54%！', icon: '🏠' },
-                { name: '3室2厅 捡漏', type: 'RealEstate', cost: 65000, down: 5000, flow: 160, desc: '屋主急售。只需 $5,000 首付。现金流 +$160。', icon: '🏚️' },
-                { name: '金币收藏', type: 'Asset', cost: 500, down: 500, flow: 0, desc: '克鲁格金币。对抗通胀的硬通货，无现金流。', icon: '🪙' }
+                { name: '2室1厅 公寓', type: 'RealEstate', cost: 45000, down: 4000, flow: 180, desc: '法拍屋。首付仅需$4000。', icon: '🏠' },
+                { name: '3室2厅 捡漏', type: 'RealEstate', cost: 65000, down: 5000, flow: 160, desc: '屋主急售。只需 $5,000 首付。', icon: '🏚️' },
+                { name: '金币收藏', type: 'Asset', cost: 500, down: 500, flow: 0, desc: '克鲁格金币。对抗通胀，无现金流。', icon: '🪙' }
             ],
             bigDeals: [
-                { name: '3室2厅 豪宅', type: 'RealEstate', cost: 125000, down: 25000, flow: 400, desc: '地段优越。不错的现金流资产，增值空间大。', icon: '🏡' },
-                { name: '4单元 公寓', type: 'RealEstate', cost: 160000, down: 32000, flow: 800, desc: '4-Plex 小型公寓楼。现金流非常健康。', icon: '🏘️' },
-                { name: '8单元 公寓', type: 'RealEstate', cost: 320000, down: 60000, flow: 2400, desc: '8-Plex。管理成本低，收益高。', icon: '🏢' },
-                { name: '洗车房', type: 'Business', cost: 150000, down: 30000, flow: 1000, desc: '全自动洗车生意。需要较多首付。', icon: '🚗' },
-                { name: '软件公司 IPO', type: 'Business', cost: 50000, down: 50000, flow: 0, desc: '私募股权。高风险高回报，上市后可能翻10倍。', icon: '💻' }
+                { name: '3室2厅 豪宅', type: 'RealEstate', cost: 125000, down: 25000, flow: 400, desc: '地段优越，增值空间大。', icon: '🏡' },
+                { name: '4单元 公寓', type: 'RealEstate', cost: 160000, down: 32000, flow: 800, desc: '4-Plex 小型公寓楼。', icon: '🏘️' },
+                { name: '8单元 公寓', type: 'RealEstate', cost: 320000, down: 60000, flow: 2400, desc: '8-Plex。管理成本低。', icon: '🏢' },
+                { name: '洗车房', type: 'Business', cost: 150000, down: 30000, flow: 1000, desc: '全自动洗车生意。', icon: '🚗' },
+                { name: '软件公司 IPO', type: 'Business', cost: 50000, down: 50000, flow: 0, desc: '私募股权。上市后可能翻10倍。', icon: '💻' }
             ],
             marketCards: [
                 { type: 'PriceChange', symbol: 'MYT4U', price: 30, desc: 'MYT4U 市场火热！股价涨至 $30。' },
                 { type: 'PriceChange', symbol: 'MYT4U', price: 5, desc: 'MYT4U 市场崩盘！股价跌至 $5。' }, 
                 { type: 'PriceChange', symbol: 'ON2U', price: 40, desc: 'ON2U 电影票房大卖！股价飙升至 $40。' },
                 { type: 'PriceChange', symbol: 'OK4U', price: 50, desc: 'OK4U 新药研发成功！股价涨至 $50。' },
-                { type: 'Buyer', target: '3室2厅 捡漏', price: 135000, desc: '刚需买家出现！出价 $135k 购买3室2厅的房子。' },
-                { type: 'Buyer', target: '2室1厅 公寓', price: 65000, desc: '投资客出价 $65k 收购所有2室1厅公寓。' },
+                { type: 'Buyer', target: '3室2厅 捡漏', price: 135000, desc: '刚需买家出现！出价 $135k。' },
+                { type: 'Buyer', target: '2室1厅 公寓', price: 65000, desc: '投资客出价 $65k 收购2室1厅。' },
                 { type: 'Buyer', target: '4单元 公寓', price: 220000, desc: '公寓市场回暖。买家出价 $220k。' },
                 { type: 'Inflation', desc: '通货膨胀！所有消费品价格上涨。' },
-                // 新增事件：金币和软件公司
-                { type: 'Buyer', target: '金币收藏', price: 1000, desc: '金价暴涨！收藏家急寻克鲁格金币，出价 $1,000。' },
-                { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！你的原始股价值飙升至 $250,000！' }
+                { type: 'Buyer', target: '金币收藏', price: 1000, desc: '金价暴涨！收藏家出价 $1,000。' },
+                { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！原始股飙升至 $250k！' }
             ],
             doodads: [
                 { name: '购买新家具', cost: 7000, icon: '🪑' },
@@ -625,7 +602,7 @@
                 if (this.state.downsizedTurns > 0) {
                     container.innerHTML = `
                         <button onclick="game.rollDice(1)" class="flex-1 bg-purple-900 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all tap-effect shadow-xl ${disabledClass}">
-                            🚫 停赛中 (还剩${this.state.downsizedTurns}轮) - 点击跳过
+                            🚫 停赛中 (还剩${this.state.downsizedTurns}轮)
                         </button>
                     `;
                     return;
@@ -664,7 +641,7 @@
                     const liquidAssets = this.state.assets.filter(a => ['Stock','RealEstate','Business','Coin'].includes(a.type));
                     
                     if (liquidAssets.length === 0) {
-                        if (confirm(`⚠️ 现金赤字 $${debt.toLocaleString()}！\n\n您目前没有可变卖的资产，必须向银行借款才能继续游戏。\n\n点击【确定】自动借入所需金额。`)) {
+                        if (confirm(`⚠️ 现金赤字 $${debt.toLocaleString()}！\n\n必须借款继续。点击确定自动借入。`)) {
                              const borrowAmt = Math.ceil(debt / 1000) * 1000;
                              this.manageLoan(borrowAmt);
                              return; 
@@ -672,7 +649,7 @@
                             return;
                         }
                     } else {
-                        alert("⚠️ 现金赤字！\n请点击顶部【资产 & 负债】按钮：\n1. 变卖资产\n2. 或申请银行借款\n\n直到手头现金 >= 0 方可继续。");
+                        alert("⚠️ 现金赤字！\n请变卖资产或借款，直到现金 >= 0。");
                         this.toggleSheet();
                         return;
                     }
@@ -751,7 +728,6 @@
                     if (!tiles[newIndex].querySelector('.player-token')) {
                         tiles[newIndex].innerHTML += `<div class="player-token"></div>`;
                     }
-                    // 滚动视图
                     setTimeout(() => tiles[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
                 }
             },
@@ -761,7 +737,6 @@
                 const flow = this.monthlyFlow;
                 this.state.cash += flow;
                 this.log(`💰 结算日：现金 ${flow >= 0 ? '+' : ''}$${flow.toLocaleString()}`);
-                this.animChange('display-cash', flow >= 0 ? 'positive' : 'negative');
                 
                 this.checkWinCondition();
 
@@ -1002,21 +977,14 @@
             },
 
             handleMarket(card) {
-                // 逻辑优化：自动处理所有类型的资产变现（房产、金币、公司）
                 if (card.type === 'Buyer') {
-                    // 查找玩家持有的同名资产
                     const assets = this.state.assets.filter(a => a.name === card.target);
-                    
                     if (assets.length > 0) {
                         assets.forEach(asset => {
-                            // 计算逻辑：卖出价 - (总成本 - 首付) = 净拿回现金
-                            // 对于房产：(Cost - Down) 是银行贷款，卖出时要还掉
-                            // 对于金币/IPO：Cost 等于 Down，没有贷款，所以 Net = Price
                             const loan = asset.cost - asset.down;
                             const netCash = card.price - loan;
-                            const profit = netCash - asset.down; // 净利润，仅用于展示
+                            const profit = netCash - asset.down; 
 
-                            // 根据资产类型生成更有趣的文案
                             let actionName = `出售: ${card.target}`;
                             let icon = '🤝';
                             if (asset.type === 'Business') { actionName = '企业退出/IPO'; icon = '🏢'; }
@@ -1028,7 +996,7 @@
                                     id: uuid(), 
                                     name: actionName, 
                                     desc: `${card.desc}<br><br>
-                                           <div class="text-xs bg-slate-100 dark:bg-white/10 p-2 rounded">
+                                           <div class="text-[10px] bg-slate-100 dark:bg-white/10 p-2 rounded">
                                            卖出价: <b>$${card.price.toLocaleString()}</b><br>
                                            偿还贷款: -$${loan.toLocaleString()}<br>
                                            <div class="border-t border-slate-300 dark:border-white/20 my-1"></div>
@@ -1037,12 +1005,11 @@
                                     icon: icon, 
                                     sellPrice: card.price, 
                                     targetAssetId: asset.id, 
-                                    roi: netCash // 这里传给 confirmCardAction 的是净得现金
+                                    roi: netCash 
                                 }
                             });
                         });
                     } else {
-                        // 玩家没有该资产，仅显示新闻
                          this.log(`📰 市场: ${card.desc}`);
                     }
                 } 
@@ -1062,7 +1029,7 @@
                                         name: `行情: ${card.symbol} $${card.price}`,
                                         desc: `${card.desc}<br>
                                                你有 ${stock.quantity} 股 (均价 $${Math.floor(stock.cost)})。<br><br>
-                                               <div class="flex justify-between text-xs font-bold">
+                                               <div class="flex justify-between text-[10px] font-bold">
                                                  <span>市值: $${totalValue.toLocaleString()}</span>
                                                  <span class="${profit>=0?'text-green-500':'text-red-500'}">
                                                    ${profit>=0?'+':''}$${profit.toLocaleString()}
@@ -1095,7 +1062,6 @@
                 
                 this.openOverlay('card-modal');
                 
-                // 更新模态框上的现金显示
                 document.getElementById('modal-cash-display').innerText = Math.floor(this.state.cash).toLocaleString();
 
                 const title = document.getElementById('card-title');
@@ -1111,7 +1077,7 @@
 
                 title.innerText = data.name;
                 desc.innerHTML = data.desc;
-                desc.className = "text-slate-500 dark:text-slate-400 text-sm mt-3 leading-relaxed px-2"; 
+                desc.className = "text-slate-500 dark:text-slate-400 text-xs mt-2 leading-relaxed px-2"; 
                 icon.innerText = data.icon || '📄';
                 tag.innerText = type === 'OPP' ? (data.type === 'Business' ? 'Big Deal' : 'Deal') : type;
                 tag.classList.remove('hidden');
@@ -1122,7 +1088,7 @@
                 btnAction.classList.remove('hidden');
                 btnCancel.classList.remove('hidden'); 
                 
-                btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
+                btnAction.className = "flex-[1.5] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-xs transition-colors";
 
                 if (type === 'OPP') {
                     if (data.type === 'Stock') {
@@ -1154,8 +1120,7 @@
                     financials.classList.add('hidden');
                     btnCancel.classList.add('hidden');
                     
-                    // 修复：移除 font-mono，改为 font-bold
-                    desc.className = "text-3xl font-bold text-slate-900 dark:text-white my-6 text-center tracking-tight"; 
+                    desc.className = "text-3xl font-bold text-slate-900 dark:text-white my-4 text-center tracking-tight"; 
                     desc.innerText = `-$${data.cost.toLocaleString()}`;
                     
                     btnAction.innerText = `支付`; 
@@ -1253,7 +1218,6 @@
                 this.checkWinCondition();
                 this.updateUI();
                 
-                // 修复：如果游戏结束（已胜利），不要关闭弹窗，以免胜利画面一闪而过导致卡死
                 if (!this.state.isGameOver) {
                     this.closeModal();
                 }
@@ -1329,7 +1293,7 @@
                             const actionBtn = `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 rounded active:bg-red-500/40">卖出</button>`;
 
                             const div = document.createElement('div');
-                            div.className = 'bg-white/10 p-3 rounded-2xl flex items-center justify-between text-white text-sm border border-white/5 mb-2';
+                            div.className = 'bg-white/10 p-3 rounded-2xl flex items-center justify-between text-white text-xs border border-white/5 mb-2';
                             div.innerHTML = `
                                 <div><div class="font-bold">${asset.name} <span class="text-[10px] bg-white/20 px-1 rounded">${badge}</span></div><div class="text-[10px] opacity-60">${valStr}</div></div>
                                 ${actionBtn}
@@ -1358,7 +1322,7 @@
                             div.className = 'debt-item text-white';
                             div.innerHTML = `
                                 <div><div class="font-bold">${item.name}</div><div class="text-[10px] opacity-60">-$${item.expense}/月</div></div>
-                                <button onclick="game.promptPayLiability('${item.id}')" class="px-2 py-1 bg-green-600 rounded text-xs active:scale-95 transition-transform">付 $${item.balance}</button>
+                                <button onclick="game.promptPayLiability('${item.id}')" class="px-2 py-1 bg-green-600 rounded text-[10px] active:scale-95 transition-transform">付 $${item.balance}</button>
                             `;
                             list.appendChild(div);
                         });
