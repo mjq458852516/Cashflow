@@ -35,17 +35,19 @@
             --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
         }
 
-        /* --- iPhone 适配核心修复 --- */
+        /* --- iPhone 适配核心修复开始 --- */
+        /* 手动定义安全区域，修复刘海和底部Home条遮挡 */
         .pt-safe-top {
-            padding-top: 20px; 
+            padding-top: 20px; /* Fallback */
             padding-top: constant(safe-area-inset-top);
             padding-top: env(safe-area-inset-top);
         }
         .pb-safe-bottom {
-            padding-bottom: 20px;
+            padding-bottom: 20px; /* Fallback */
             padding-bottom: constant(safe-area-inset-bottom);
             padding-bottom: env(safe-area-inset-bottom);
         }
+        /* --- iPhone 适配核心修复结束 --- */
 
         @media (prefers-color-scheme: dark) {
             :root {
@@ -70,12 +72,13 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; 
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            /* 关键修改：移除 padding-bottom，由布局类控制 */
             color: #1c1c1e;
             overflow: hidden; 
         }
 
         .hardware-accel {
-            transform: translate3d(0, 0, 0); /* 强制开启 GPU 加速，防止闪烁 */
+            transform: translate3d(0, 0, 0);
             -webkit-transform: translate3d(0, 0, 0);
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
@@ -198,8 +201,6 @@
             background-color: rgba(0, 0, 0, 0.4); 
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-            /* 优化点：明确告知浏览器 opacity 会变化，避免重绘闪烁 */
-            will-change: opacity;
         } 
         @media (prefers-color-scheme: dark) {
             #modal-overlay { background-color: rgba(0, 0, 0, 0.65); }
@@ -1381,7 +1382,7 @@
                     overlay.classList.remove('opacity-0');
                     this.state.currentCard = null;
                     this.processQueue();
-                }, 300); // 核心修复：将时间改为300ms，匹配CSS transition-duration
+                }, 200);
             },
             updateUI() {
                 document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
