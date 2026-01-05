@@ -35,19 +35,17 @@
             --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
         }
 
-        /* --- iPhone 适配核心修复开始 --- */
-        /* 手动定义安全区域，修复刘海和底部Home条遮挡 */
+        /* --- iPhone 适配核心修复 --- */
         .pt-safe-top {
-            padding-top: 20px; /* Fallback */
+            padding-top: 20px; 
             padding-top: constant(safe-area-inset-top);
             padding-top: env(safe-area-inset-top);
         }
         .pb-safe-bottom {
-            padding-bottom: 20px; /* Fallback */
+            padding-bottom: 20px;
             padding-bottom: constant(safe-area-inset-bottom);
             padding-bottom: env(safe-area-inset-bottom);
         }
-        /* --- iPhone 适配核心修复结束 --- */
 
         @media (prefers-color-scheme: dark) {
             :root {
@@ -67,22 +65,17 @@
             .tile-down { background: #3b0764 !important; color: #c084fc !important; border-color: #581c87 !important; }
         }
 
-        html {
-            background-color: var(--ios-bg);
-        }
-
         body { 
             background-color: var(--ios-bg); 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; 
             -webkit-tap-highlight-color: transparent;
             user-select: none;
-            /* 关键修改：移除 padding-bottom，由布局类控制 */
             color: #1c1c1e;
             overflow: hidden; 
         }
 
         .hardware-accel {
-            transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0); /* 强制开启 GPU 加速，防止闪烁 */
             -webkit-transform: translate3d(0, 0, 0);
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
@@ -199,34 +192,16 @@
         }
         @media (prefers-color-scheme: dark) { #input-qty-field { color: white; } }
         #input-qty-field:focus { border-bottom-color: var(--ios-blue); }
-
-
+        
         #modal-overlay { 
             z-index: 60 !important; 
             background-color: rgba(0, 0, 0, 0.4); 
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-
-            /* iOS Safari：避免关闭弹窗时顶部“闪一下”的重绘闪烁 */
-            opacity: 1;
+            /* 优化点：明确告知浏览器 opacity 会变化，避免重绘闪烁 */
             will-change: opacity;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-        }
-        /* 淡出时只处理 opacity，避免 display:none 触发整页重排/闪屏 */
-        #modal-overlay.overlay-fade {
-            opacity: 0;
-            pointer-events: none;
-        }
-        /* 淡出结束后再隐藏，防止点击穿透 & 保持动画流畅 */
-        #modal-overlay.overlay-hidden {
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-@media (prefers-color-scheme: dark) {
+        } 
+        @media (prefers-color-scheme: dark) {
             #modal-overlay { background-color: rgba(0, 0, 0, 0.65); }
         }
     </style>
@@ -287,7 +262,7 @@
         </div>
     </div>
 
-    <div id="modal-overlay" class="fixed inset-0 flex items-end sm:items-center justify-center transition-opacity duration-300 overlay-fade overlay-hidden">
+    <div id="modal-overlay" class="fixed inset-0 hidden flex items-end sm:items-center justify-center transition-opacity duration-300">
         
         <div id="card-modal" class="glass w-full sm:w-[380px] sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl hidden relative pb-safe-bottom hardware-accel">
             
@@ -665,8 +640,7 @@
                 if (this.isMoving) return;
                 
                 const overlay = document.getElementById('modal-overlay');
-                // 弹窗存在（显示或正在淡出）时，不允许掷骰子，避免 iOS 叠层闪烁
-                if (!overlay.classList.contains('overlay-hidden')) {
+                if ((!overlay.classList.contains('hidden')) || overlay.style.display === 'flex') {
                     return;
                 }
 
@@ -1008,8 +982,7 @@
                 if (this.state.eventQueue.length === 0) return;
                 
                 const overlay = document.getElementById('modal-overlay');
-                // 弹窗显示中（或正在淡出）则不抢占 UI
-                if (!overlay.classList.contains('overlay-hidden')) return; 
+                if (!overlay.classList.contains('hidden') || overlay.style.display !== 'none') return; 
 
                 const nextEvent = this.state.eventQueue.shift();
                 
@@ -1387,36 +1360,29 @@
 
             openOverlay(id) {
                 const overlay = document.getElementById('modal-overlay');
-
-                // 先让容器可见，再在下一帧移除 fade，保证 iOS 上过渡不闪烁
-                overlay.classList.remove('overlay-hidden');
-                // 强制一次 reflow，确保 visibility 已生效
-                overlay.getBoundingClientRect();
-                requestAnimationFrame(() => overlay.classList.remove('overlay-fade'));
-
+                overlay.classList.remove('hidden');
+                overlay.style.display = 'flex';
+                
                 ['card-modal','choice-modal','game-over-modal'].forEach(i => document.getElementById(i).classList.add('hidden'));
-
+                
                 const target = document.getElementById(id);
-                target.classList.remove('hidden', 'shake-anim');
+                target.classList.remove('hidden', 'shake-anim'); 
                 target.classList.add('modal-enter');
             },
-
             closeModal() {
                 const overlay = document.getElementById('modal-overlay');
-
-                // 先淡出（不切 display），避免 iOS 顶部闪一下
-                overlay.classList.add('overlay-fade');
-
+                overlay.classList.add('opacity-0'); 
+                
                 if (uiTimer) clearTimeout(uiTimer);
-
+                
                 uiTimer = setTimeout(() => {
-                    // 淡出结束后再隐藏（visibility），并清理卡片状态
-                    overlay.classList.add('overlay-hidden');
+                    overlay.classList.add('hidden'); 
+                    overlay.style.display = 'none';
+                    overlay.classList.remove('opacity-0');
                     this.state.currentCard = null;
                     this.processQueue();
-                }, 220);
+                }, 300); // 核心修复：将时间改为300ms，匹配CSS transition-duration
             },
-
             updateUI() {
                 document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
                 document.getElementById('display-flow').innerText = '$' + this.monthlyFlow.toLocaleString();
