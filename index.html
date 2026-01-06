@@ -336,6 +336,13 @@
             <button onclick="game.closeModal()" class="w-full mt-6 py-2 mb-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
         </div>
 
+        <div id="dream-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-6 shadow-2xl hidden flex-col pb-safe-bottom hardware-accel max-h-[80vh]">
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 text-center">选择你的梦想</h3>
+    <p class="text-xs text-slate-400 text-center mb-4">这是你进入快车道后的终极目标。</p>
+    <div id="dream-list" class="overflow-y-auto space-y-3 flex-1 px-1">
+            </div>
+        </div>
+
         <div id="game-over-modal" class="glass w-[90%] sm:w-[360px] rounded-[32px] p-8 shadow-2xl hidden flex-col items-center text-center dark:border dark:border-white/10 hardware-accel pb-safe-bottom">
             <div class="text-6xl mb-4" id="end-icon">☠️</div>
             <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2" id="end-title">游戏结束</h2>
@@ -388,408 +395,596 @@
     </div>
 
     <script>
-        const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
-        const CONFIG = {
-            basicLivingExpense: 0,
-            professions: [
-                {
-                    name: '门卫', icon: '🧹', salary: 1600, savings: 560, perChild: 70,
-                    debts: { mortgage: 20000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
-                    expenses: { tax: 280, mortgage: 200, car: 60, credit: 60, retail: 50, loan: 0, other: 300 }
-                },
-                {
-                    name: '卡车司机', icon: '🚛', salary: 2500, savings: 750, perChild: 140,
-                    debts: { mortgage: 31000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
-                    expenses: { tax: 460, mortgage: 400, car: 80, credit: 60, retail: 50, loan: 0, other: 570 }
-                },
-                {
-                    name: '机械师', icon: '🔧', salary: 2000, savings: 670, perChild: 110,
-                    debts: { mortgage: 31000, car: 3000, credit: 2000, retail: 1000, loan: 0 },
-                    expenses: { tax: 360, mortgage: 300, car: 60, credit: 60, retail: 50, loan: 0, other: 450 }
-                },
-                {
-                    name: '教师', icon: '📚', salary: 3300, savings: 400, perChild: 180,
-                    debts: { mortgage: 50000, car: 5000, credit: 3000, retail: 1000, loan: 12000 },
-                    expenses: { tax: 630, mortgage: 500, car: 100, credit: 90, retail: 50, loan: 60, other: 760 }
-                },
-                {
-                    name: '护士', icon: '💉', salary: 3100, savings: 480, perChild: 170,
-                    debts: { mortgage: 47000, car: 5000, credit: 3000, retail: 1000, loan: 6000 },
-                    expenses: { tax: 600, mortgage: 400, car: 100, credit: 90, retail: 50, loan: 30, other: 710 }
-                },
-                {
-                    name: '秘书', icon: '📝', salary: 2500, savings: 710, perChild: 140,
-                    debts: { mortgage: 38000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
-                    expenses: { tax: 460, mortgage: 400, car: 80, credit: 60, retail: 50, loan: 0, other: 570 }
-                },
-                {
-                    name: '警官', icon: '👮', salary: 3000, savings: 520, perChild: 160,
-                    debts: { mortgage: 46000, car: 5000, credit: 2000, retail: 1000, loan: 0 },
-                    expenses: { tax: 580, mortgage: 400, car: 100, credit: 60, retail: 50, loan: 0, other: 690 }
-                },
-                {
-                    name: '经理', icon: '👔', salary: 4600, savings: 400, perChild: 240,
-                    debts: { mortgage: 75000, car: 6000, credit: 4000, retail: 1000, loan: 12000 },
-                    expenses: { tax: 910, mortgage: 700, car: 120, credit: 120, retail: 50, loan: 60, other: 1000 }
-                },
-                {
-                    name: '工程师', icon: '📐', salary: 4900, savings: 400, perChild: 250,
-                    debts: { mortgage: 75000, car: 7000, credit: 5000, retail: 1000, loan: 12000 },
-                    expenses: { tax: 1050, mortgage: 700, car: 140, credit: 150, retail: 50, loan: 60, other: 1090 }
-                },
-                {
-                    name: '医生', icon: '⚕️', salary: 13200, savings: 400, perChild: 640,
-                    debts: { mortgage: 202000, car: 19000, credit: 9000, retail: 1000, loan: 150000 },
-                    expenses: { tax: 3420, mortgage: 1900, car: 380, credit: 270, retail: 50, loan: 750, other: 2880 }
-                },
-                {
-                    name: '律师', icon: '⚖️', salary: 7500, savings: 400, perChild: 380,
-                    debts: { mortgage: 115000, car: 11000, credit: 6000, retail: 1000, loan: 78000 },
-                    expenses: { tax: 1830, mortgage: 1100, car: 220, credit: 180, retail: 50, loan: 390, other: 1650 }
-                },
-                {
-                    name: '飞行员', icon: '✈️', salary: 9500, savings: 400, perChild: 480,
-                    debts: { mortgage: 143000, car: 15000, credit: 22000, retail: 1000, loan: 0 },
-                    expenses: { tax: 2350, mortgage: 1330, car: 300, credit: 660, retail: 50, loan: 0, other: 2210 }
-                }
-            ],
+    const CONFIG = {
+        basicLivingExpense: 0,
+        
+        // 梦想列表
+        dreams: [
+            { id: 'island', name: '私人岛屿', cost: 200000, icon: '🏝️', desc: '在太平洋拥有属于自己的度假天堂。' },
+            { id: 'mayor', name: '竞选市长', cost: 150000, icon: '🏛️', desc: '投身公共服务，管理整个城市。' },
+            { id: 'park', name: '冠名公园', cost: 100000, icon: '🌳', desc: '为社区捐赠一座以你名字命名的公园。' },
+            { id: 'library', name: '捐赠图书馆', cost: 80000, icon: '📚', desc: '为孩子们建立一座现代化的图书馆。' },
+            { id: 'jet', name: '私人喷气机', cost: 250000, icon: '✈️', desc: '湾流 G650，随时随地起飞。' },
+            { id: 'golf', name: '世界高尔夫', cost: 120000, icon: '⛳', desc: '打遍世界上最顶级的100个球场。' },
+            { id: 'yacht', name: '豪华游艇', cost: 300000, icon: '🛥️', desc: '在地中海拥有这艘名为“自由号”的巨轮。' },
+            { id: 'school', name: '希望小学', cost: 500000, icon: '🏫', desc: '建立一所全免费的精英学校。' }
+        ],
+
+        // 职业数据
+        professions: [
+            {
+                name: '门卫', icon: '🧹', salary: 1600, savings: 560, perChild: 70,
+                debts: { mortgage: 20000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
+                expenses: { tax: 280, mortgage: 200, car: 60, credit: 60, retail: 50, loan: 0, other: 300 }
+            },
+            {
+                name: '卡车司机', icon: '🚛', salary: 2500, savings: 750, perChild: 140,
+                debts: { mortgage: 31000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
+                expenses: { tax: 460, mortgage: 400, car: 80, credit: 60, retail: 50, loan: 0, other: 570 }
+            },
+            {
+                name: '机械师', icon: '🔧', salary: 2000, savings: 670, perChild: 110,
+                debts: { mortgage: 31000, car: 3000, credit: 2000, retail: 1000, loan: 0 },
+                expenses: { tax: 360, mortgage: 300, car: 60, credit: 60, retail: 50, loan: 0, other: 450 }
+            },
+            {
+                name: '教师', icon: '📚', salary: 3300, savings: 400, perChild: 180,
+                debts: { mortgage: 50000, car: 5000, credit: 3000, retail: 1000, loan: 12000 },
+                expenses: { tax: 630, mortgage: 500, car: 100, credit: 90, retail: 50, loan: 60, other: 760 }
+            },
+            {
+                name: '护士', icon: '💉', salary: 3100, savings: 480, perChild: 170,
+                debts: { mortgage: 47000, car: 5000, credit: 3000, retail: 1000, loan: 6000 },
+                expenses: { tax: 600, mortgage: 400, car: 100, credit: 90, retail: 50, loan: 30, other: 710 }
+            },
+            {
+                name: '秘书', icon: '📝', salary: 2500, savings: 710, perChild: 140,
+                debts: { mortgage: 38000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
+                expenses: { tax: 460, mortgage: 400, car: 80, credit: 60, retail: 50, loan: 0, other: 570 }
+            },
+            {
+                name: '警官', icon: '👮', salary: 3000, savings: 520, perChild: 160,
+                debts: { mortgage: 46000, car: 5000, credit: 2000, retail: 1000, loan: 0 },
+                expenses: { tax: 580, mortgage: 400, car: 100, credit: 60, retail: 50, loan: 0, other: 690 }
+            },
+            {
+                name: '经理', icon: '👔', salary: 4600, savings: 400, perChild: 240,
+                debts: { mortgage: 75000, car: 6000, credit: 4000, retail: 1000, loan: 12000 },
+                expenses: { tax: 910, mortgage: 700, car: 120, credit: 120, retail: 50, loan: 60, other: 1000 }
+            },
+            {
+                name: '工程师', icon: '📐', salary: 4900, savings: 400, perChild: 250,
+                debts: { mortgage: 75000, car: 7000, credit: 5000, retail: 1000, loan: 12000 },
+                expenses: { tax: 1050, mortgage: 700, car: 140, credit: 150, retail: 50, loan: 60, other: 1090 }
+            },
+            {
+                name: '医生', icon: '⚕️', salary: 13200, savings: 400, perChild: 640,
+                debts: { mortgage: 202000, car: 19000, credit: 9000, retail: 1000, loan: 150000 },
+                expenses: { tax: 3420, mortgage: 1900, car: 380, credit: 270, retail: 50, loan: 750, other: 2880 }
+            },
+            {
+                name: '律师', icon: '⚖️', salary: 7500, savings: 400, perChild: 380,
+                debts: { mortgage: 115000, car: 11000, credit: 6000, retail: 1000, loan: 78000 },
+                expenses: { tax: 1830, mortgage: 1100, car: 220, credit: 180, retail: 50, loan: 390, other: 1650 }
+            },
+            {
+                name: '飞行员', icon: '✈️', salary: 9500, savings: 400, perChild: 480,
+                debts: { mortgage: 143000, car: 15000, credit: 22000, retail: 1000, loan: 0 },
+                expenses: { tax: 2350, mortgage: 1330, car: 300, credit: 660, retail: 50, loan: 0, other: 2210 }
+            }
+        ],
+        
+        // 老鼠赛跑地图 (24格)
+        tiles: [
+            { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Market', label: '市场', color: 'tile-market', icon: '📈' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Doodad', label: '额外支出', color: 'tile-doodad', icon: '💸' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Charity', label: '慈善', color: 'tile-charity', icon: '💜' }, 
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Market', label: '市场', color: 'tile-market', icon: '📉' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Doodad', label: '额外支出', color: 'tile-doodad', icon: '💸' },
+            { type: 'Downsized', label: '失业', color: 'tile-down', icon: '🛋️' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Market', label: '市场', color: 'tile-market', icon: '📈' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Doodad', label: '额外支出', color: 'tile-doodad', icon: '💸' },
+            { type: 'Baby', label: '生孩子', color: 'tile-baby', icon: '👶' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+        ],
+
+        // 快车道地图 (48格) - 经典还原
+        // 颜色代码: Business=Opp颜色, Dream=Baby颜色, Charity=Charity颜色, Cashflow=Pay颜色, Hazard=Doodad/Down颜色
+        fastTrackTiles: [
+            // 第一组 12
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏢' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '💖' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏭' },
+            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
+            { type: 'FT_Charity', label: '慈善', color: 'tile-charity', icon: '💜' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏥' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏝️' },
+            { type: 'FT_Hazard', label: '税务审计', color: 'tile-doodad', icon: '👮', effect: 'audit' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏬' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🚤' },
+            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🎬' },
+            // 第二组 12
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏰' },
+            { type: 'FT_Hazard', label: '离婚', color: 'tile-down', icon: '💔', effect: 'divorce' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🍕' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🗿' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '⛏️' },
+            { type: 'FT_Hazard', label: '官司', color: 'tile-doodad', icon: '⚖️', effect: 'lawsuit' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🧪' },
+            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🎢' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏦' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏟️' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '📡' },
+            // 第三组 12
+            { type: 'FT_Charity', label: '慈善', color: 'tile-charity', icon: '💜' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🚛' },
+            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🦁' },
+            { type: 'FT_Hazard', label: '税务审计', color: 'tile-doodad', icon: '👮', effect: 'audit' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏫' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🚁' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🧬' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🎪' },
+            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
+            { type: 'FT_Hazard', label: '离婚', color: 'tile-down', icon: '💔', effect: 'divorce' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🔌' },
+            // 第四组 12
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏰' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏯' },
+            { type: 'FT_Hazard', label: '官司', color: 'tile-doodad', icon: '⚖️', effect: 'lawsuit' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🚄' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '⛲' },
+            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🛍️' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏝️' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🥦' },
+            { type: 'FT_Charity', label: '慈善', color: 'tile-charity', icon: '💜' },
+            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🤖' },
+            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '⛷️' },
+        ],
+
+        smallDeals: [
+            { name: 'MYT4U 电子', symbol:'MYT4U', type: 'Stock', cost: 10, range: '$5-$30', desc: '股价 $10。长期在$5到$30之间波动。', icon: '📉', allowShort: false },
+            { name: 'OK4U 医药', symbol:'OK4U', type: 'Stock', cost: 40, range: '$5-$40', desc: '股价 $40，处于历史高位。', icon: '⛰️', allowShort: false },
+            { name: 'ON2U 娱乐', symbol:'ON2U', type: 'Stock', cost: 5, range: '$5-$40', desc: '便士股票！价格仅为 $5，风险低，回报可能极高。', icon: '🚀', allowShort: false },
+            { name: '优先股分红', type: 'Asset', cost: 1200, down: 1200, flow: 10, desc: '电力公司优先股，提供稳定的10%年化回报。', icon: '📜' },
+            { name: '银行定期存单', type: 'Asset', cost: 4000, down: 4000, flow: 20, desc: '低风险CD存单。', icon: '🏦' },
+            { name: '2室1厅 公寓', type: 'RealEstate', cost: 45000, down: 4000, flow: 180, desc: '法拍屋。首付仅需$4000，ROI高达54%！', icon: '🏠' },
+            { name: '3室2厅 捡漏', type: 'RealEstate', cost: 65000, down: 5000, flow: 160, desc: '屋主急售。只需 $5,000 首付。现金流 +$160。', icon: '🏚️' },
+            { name: '金币收藏', type: 'Asset', cost: 500, down: 500, flow: 0, desc: '克鲁格金币。对抗通胀的硬通货，无现金流。', icon: '🪙' }
+        ],
+        bigDeals: [
+            { name: '3室2厅 豪宅', type: 'RealEstate', cost: 125000, down: 25000, flow: 400, desc: '地段优越。不错的现金流资产，增值空间大。', icon: '🏡' },
+            { name: '4单元 公寓', type: 'RealEstate', cost: 160000, down: 32000, flow: 800, desc: '4-Plex 小型公寓楼。现金流非常健康。', icon: '🏘️' },
+            { name: '8单元 公寓', type: 'RealEstate', cost: 320000, down: 60000, flow: 2400, desc: '8-Plex。管理成本低，收益高。', icon: '🏢' },
+            { name: '洗车房', type: 'Business', cost: 150000, down: 30000, flow: 1000, desc: '全自动洗车生意。需要较多首付。', icon: '🚗' },
+            { name: '软件公司 IPO', type: 'Business', cost: 50000, down: 50000, flow: 0, desc: '私募股权。高风险高回报，上市后可能翻10倍。', icon: '💻' }
+        ],
+        // 快车道生意
+        fastTrackDeals: [
+            { name: '生物科技公司', cost: 200000, flow: 10000, icon: '🧬', desc: '治愈罕见病，市场潜力巨大。' },
+            { name: '炸鸡连锁店', cost: 150000, flow: 9000, icon: '🍗', desc: '全球特许经营扩张计划。' },
+            { name: 'AI 研发中心', cost: 250000, flow: 12000, icon: '💻', desc: '开发下一代人工智能通用模型。' },
+            { name: '市中心购物广场', cost: 300000, flow: 15000, icon: '🏬', desc: '位于CBD的黄金地段。' },
+            { name: '非洲金矿', cost: 500000, flow: 25000, icon: '⛏️', desc: '勘探队发现了巨大的矿脉。' },
+            { name: '好莱坞制片厂', cost: 600000, flow: 30000, icon: '🎬', desc: '生产全球发行的超级大片。' },
+            { name: '私人太空探索', cost: 1000000, flow: 50000, icon: '🚀', desc: '火星殖民计划前哨站。' }
+        ],
+        marketCards: [
+            { type: 'PriceChange', symbol: 'MYT4U', price: 30, desc: 'MYT4U 市场火热！股价涨至 $30。' },
+            { type: 'PriceChange', symbol: 'MYT4U', price: 5, desc: 'MYT4U 市场崩盘！股价跌至 $5。' }, 
+            { type: 'PriceChange', symbol: 'ON2U', price: 40, desc: 'ON2U 电影票房大卖！股价飙升至 $40。' },
+            { type: 'PriceChange', symbol: 'OK4U', price: 50, desc: 'OK4U 新药研发成功！股价涨至 $50。' },
+            { type: 'Buyer', target: '3室2厅 捡漏', price: 135000, desc: '刚需买家出现！出价 $135k 购买3室2厅的房子。' },
+            { type: 'Buyer', target: '2室1厅 公寓', price: 65000, desc: '投资客出价 $65k 收购所有2室1厅公寓。' },
+            { type: 'Buyer', target: '4单元 公寓', price: 220000, desc: '公寓市场回暖。买家出价 $220k。' },
+            { type: 'Inflation', desc: '通货膨胀！所有消费品价格上涨。' },
+            { type: 'Buyer', target: '金币收藏', price: 1000, desc: '金价暴涨！收藏家急寻克鲁格金币，出价 $1,000。' },
+            { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！你的原始股价值飙升至 $250,000！' }
+        ],
+        doodads: [
+            { name: '购买新家具', cost: 7000, icon: '🪑' },
+            { name: '车坏了', cost: 500, icon: '🔧' },
+            { name: '购买大屏电视', cost: 1000, icon: '📺' },
+            { name: '请朋友吃饭', cost: 100, icon: '🍽️' },
+            { name: '购买名牌服装', cost: 400, icon: '👗' },
+            { name: '高尔夫会员', cost: 1500, icon: '⛳️' },
+            { name: '每天喝拿铁', cost: 150, icon: '☕️' },
+            { name: '家庭度假', cost: 2000, icon: '🏖️' }
+        ]
+    };
+
+    let uiTimer = null; 
+
+    const game = {
+        state: {
+            isGameOver: false,
+            isFastTrack: false, // 是否在快车道
+            userDream: null,    // 选中的梦想
+            ftAddedCashflow: 0, // 快车道新增现金流
             
-            tiles: [
-                { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Market', label: '市场', color: 'tile-market', icon: '📈' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Doodad', label: '额外支出', color: 'tile-doodad', icon: '💸' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Charity', label: '慈善', color: 'tile-charity', icon: '💜' }, 
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Market', label: '市场', color: 'tile-market', icon: '📉' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Doodad', label: '额外支出', color: 'tile-doodad', icon: '💸' },
-                { type: 'Downsized', label: '失业', color: 'tile-down', icon: '🛋️' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Market', label: '市场', color: 'tile-market', icon: '📈' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Doodad', label: '额外支出', color: 'tile-doodad', icon: '💸' },
-                { type: 'Baby', label: '生孩子', color: 'tile-baby', icon: '👶' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-                { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
-            ],
+            cash: 0,
+            loan: 0,
+            liabilities: [],
+            pos: 0,
+            assets: [], 
+            salary: 0,
+            passive: 0,
+            childCount: 0,
+            currentCard: null,
+            inputQty: 100, 
+            currentTab: 'paper',
+            downsizedTurns: 0, 
+            charityTurns: 0, 
+            eventQueue: [],
+            
+            jobTitle: '',
+            jobIcon: '',
+            perBabyCost: 0,
+            basicTax: 0,
+            otherExpense: 0
+        },
 
-            smallDeals: [
-                { name: 'MYT4U 电子', symbol:'MYT4U', type: 'Stock', cost: 10, range: '$5-$30', desc: '股价 $10。长期在$5到$30之间波动。', icon: '📉', allowShort: false },
-                { name: 'OK4U 医药', symbol:'OK4U', type: 'Stock', cost: 40, range: '$5-$40', desc: '股价 $40，处于历史高位。', icon: '⛰️', allowShort: false },
-                { name: 'ON2U 娱乐', symbol:'ON2U', type: 'Stock', cost: 5, range: '$5-$40', desc: '便士股票！价格仅为 $5，风险低，回报可能极高。', icon: '🚀', allowShort: false },
-                { name: '优先股分红', type: 'Asset', cost: 1200, down: 1200, flow: 10, desc: '电力公司优先股，提供稳定的10%年化回报。', icon: '📜' },
-                { name: '银行定期存单', type: 'Asset', cost: 4000, down: 4000, flow: 20, desc: '低风险CD存单。', icon: '🏦' },
-                { name: '2室1厅 公寓', type: 'RealEstate', cost: 45000, down: 4000, flow: 180, desc: '法拍屋。首付仅需$4000，ROI高达54%！', icon: '🏠' },
-                { name: '3室2厅 捡漏', type: 'RealEstate', cost: 65000, down: 5000, flow: 160, desc: '屋主急售。只需 $5,000 首付。现金流 +$160。', icon: '🏚️' },
-                { name: '金币收藏', type: 'Asset', cost: 500, down: 500, flow: 0, desc: '克鲁格金币。对抗通胀的硬通货，无现金流。', icon: '🪙' }
-            ],
-            bigDeals: [
-                { name: '3室2厅 豪宅', type: 'RealEstate', cost: 125000, down: 25000, flow: 400, desc: '地段优越。不错的现金流资产，增值空间大。', icon: '🏡' },
-                { name: '4单元 公寓', type: 'RealEstate', cost: 160000, down: 32000, flow: 800, desc: '4-Plex 小型公寓楼。现金流非常健康。', icon: '🏘️' },
-                { name: '8单元 公寓', type: 'RealEstate', cost: 320000, down: 60000, flow: 2400, desc: '8-Plex。管理成本低，收益高。', icon: '🏢' },
-                { name: '洗车房', type: 'Business', cost: 150000, down: 30000, flow: 1000, desc: '全自动洗车生意。需要较多首付。', icon: '🚗' },
-                { name: '软件公司 IPO', type: 'Business', cost: 50000, down: 50000, flow: 0, desc: '私募股权。高风险高回报，上市后可能翻10倍。', icon: '💻' }
-            ],
-            marketCards: [
-                { type: 'PriceChange', symbol: 'MYT4U', price: 30, desc: 'MYT4U 市场火热！股价涨至 $30。' },
-                { type: 'PriceChange', symbol: 'MYT4U', price: 5, desc: 'MYT4U 市场崩盘！股价跌至 $5。' }, 
-                { type: 'PriceChange', symbol: 'ON2U', price: 40, desc: 'ON2U 电影票房大卖！股价飙升至 $40。' },
-                { type: 'PriceChange', symbol: 'OK4U', price: 50, desc: 'OK4U 新药研发成功！股价涨至 $50。' },
-                { type: 'Buyer', target: '3室2厅 捡漏', price: 135000, desc: '刚需买家出现！出价 $135k 购买3室2厅的房子。' },
-                { type: 'Buyer', target: '2室1厅 公寓', price: 65000, desc: '投资客出价 $65k 收购所有2室1厅公寓。' },
-                { type: 'Buyer', target: '4单元 公寓', price: 220000, desc: '公寓市场回暖。买家出价 $220k。' },
-                { type: 'Inflation', desc: '通货膨胀！所有消费品价格上涨。' },
-                // 新增事件：金币和软件公司
-                { type: 'Buyer', target: '金币收藏', price: 1000, desc: '金价暴涨！收藏家急寻克鲁格金币，出价 $1,000。' },
-                { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！你的原始股价值飙升至 $250,000！' }
-            ],
-            doodads: [
-                { name: '购买新家具', cost: 7000, icon: '🪑' },
-                { name: '车坏了', cost: 500, icon: '🔧' },
-                { name: '购买大屏电视', cost: 1000, icon: '📺' },
-                { name: '请朋友吃饭', cost: 100, icon: '🍽️' },
-                { name: '购买名牌服装', cost: 400, icon: '👗' },
-                { name: '高尔夫会员', cost: 1500, icon: '⛳️' },
-                { name: '每天喝拿铁', cost: 150, icon: '☕️' },
-                { name: '家庭度假', cost: 2000, icon: '🏖️' }
-            ]
-        };
+        isMoving: false, 
 
-        let uiTimer = null; 
+        // 初始化：先选梦想
+        init() {
+            this.renderDreamSelection();
+        },
 
-        const game = {
-            state: {
-                isGameOver: false,
-                cash: 0,
-                loan: 0,
-                liabilities: [],
-                pos: 0,
-                assets: [], 
-                salary: 0,
-                passive: 0,
-                childCount: 0,
-                currentCard: null,
-                inputQty: 100, 
-                currentTab: 'paper',
-                downsizedTurns: 0, 
-                charityTurns: 0, 
-                eventQueue: [],
-                
-                jobTitle: '',
-                jobIcon: '',
-                perBabyCost: 0,
-                basicTax: 0,
-                otherExpense: 0
-            },
+        renderDreamSelection() {
+            this.openOverlay('dream-modal');
+            const list = document.getElementById('dream-list');
+            list.innerHTML = '';
+            CONFIG.dreams.forEach(dream => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-3 mb-2 rounded-2xl border bg-white/50 dark:bg-[#2c2c2e]/50 border-slate-100 dark:border-white/5 hover:border-pink-400 active:bg-pink-50 dark:active:bg-pink-900/20 tap-effect flex items-center gap-3 transition-all text-left group";
+                btn.onclick = () => this.startGame(dream);
+                btn.innerHTML = `
+                    <div class="text-3xl group-active:scale-110 transition-transform">${dream.icon}</div>
+                    <div class="flex-1">
+                        <div class="font-bold text-slate-800 dark:text-white flex justify-between">
+                            <span>${dream.name}</span>
+                            <span class="text-pink-500">$${dream.cost.toLocaleString()}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">${dream.desc}</div>
+                    </div>
+                `;
+                list.appendChild(btn);
+            });
+        },
 
-            isMoving: false, 
+        startGame(selectedDream) {
+            this.state.userDream = selectedDream;
+            this.closeModal(); // 关闭梦想弹窗
+            
+            this.state.isGameOver = false;
+            this.state.isFastTrack = false;
+            this.state.pos = 0;
+            this.state.ftAddedCashflow = 0;
 
-            init() {
-                this.state.isGameOver = false;
-                const job = CONFIG.professions[Math.floor(Math.random() * CONFIG.professions.length)];
-                
-                this.state.jobTitle = job.name;
-                this.state.jobIcon = job.icon;
-                this.state.salary = job.salary;
-                this.state.cash = job.savings;
-                this.state.perBabyCost = job.perChild;
-                
-                this.state.basicTax = job.expenses.tax;
-                this.state.otherExpense = job.expenses.other;
+            const job = CONFIG.professions[Math.floor(Math.random() * CONFIG.professions.length)];
+            
+            this.state.jobTitle = job.name;
+            this.state.jobIcon = job.icon;
+            this.state.salary = job.salary;
+            this.state.cash = job.savings;
+            this.state.perBabyCost = job.perChild;
+            
+            this.state.basicTax = job.expenses.tax;
+            this.state.otherExpense = job.expenses.other;
 
-                this.state.liabilities = [];
-                const debtMap = {
-                    mortgage: { name: '房屋抵押', exp: job.expenses.mortgage },
-                    car: { name: '购车贷款', exp: job.expenses.car },
-                    credit: { name: '信用卡', exp: job.expenses.credit },
-                    retail: { name: '零售信贷', exp: job.expenses.retail },
-                    loan: { name: '教育贷款', exp: job.expenses.loan }
-                };
+            this.state.liabilities = [];
+            this.state.assets = [];
+            this.state.passive = 0;
+            this.state.childCount = 0;
+            
+            const debtMap = {
+                mortgage: { name: '房屋抵押', exp: job.expenses.mortgage },
+                car: { name: '购车贷款', exp: job.expenses.car },
+                credit: { name: '信用卡', exp: job.expenses.credit },
+                retail: { name: '零售信贷', exp: job.expenses.retail },
+                loan: { name: '教育贷款', exp: job.expenses.loan }
+            };
 
-                for (const [key, amount] of Object.entries(job.debts)) {
-                    if (amount > 0) {
-                        this.state.liabilities.push({
-                            id: key,
-                            name: debtMap[key].name,
-                            balance: amount,
-                            expense: debtMap[key].exp
-                        });
-                    }
+            for (const [key, amount] of Object.entries(job.debts)) {
+                if (amount > 0) {
+                    this.state.liabilities.push({
+                        id: key,
+                        name: debtMap[key].name,
+                        balance: amount,
+                        expense: debtMap[key].exp
+                    });
                 }
+            }
 
-                this.renderBoard(); 
+            this.renderBoard(); 
+            this.updateUI();
+            
+            document.getElementById('sheet-salary').innerText = this.state.salary.toLocaleString();
+            document.getElementById('game-phase-text').innerText = this.state.jobTitle;
+            document.getElementById('game-phase-badge').innerText = this.state.jobIcon;
+            
+            this.log(`🎯 目标: ${selectedDream.name}`, true);
+            setTimeout(() => this.log(`🎲 职业: ${job.name} (逃离老鼠赛跑)`), 1500);
+        },
+
+        enterFastTrack() {
+            this.state.isFastTrack = true;
+            this.state.isGameOver = false;
+            
+            // 快车道初始设置：
+            // 1. 收入变为被动收入
+            // 2. 现金 = 原始现金 + (被动收入 * 100) (简化版规则奖励)
+            const oldPassive = this.state.passive;
+            this.state.cash += (oldPassive * 100);
+            
+            // 清理旧状态
+            this.state.assets = []; 
+            this.state.liabilities = []; 
+            this.state.childCount = 0;
+            this.state.loan = 0;
+            this.state.basicTax = 0;
+            this.state.otherExpense = 0;
+            this.state.pos = 0;
+            this.state.ftAddedCashflow = 0;
+            
+            // 新的“工资”就是现金流日收入
+            this.state.salary = oldPassive;
+            this.state.passive = 0; // 这里的passive只记录快车道新增的，用于判断 +50k 胜利条件
+
+            this.renderBoard();
+            this.updateUI();
+            
+            // UI 更新
+            document.getElementById('game-phase-badge').innerText = '🏎️';
+            document.getElementById('game-phase-text').innerText = '快车道';
+            
+            this.openOverlay('game-over-modal');
+            document.getElementById('end-icon').innerText = '🚀';
+            document.getElementById('end-title').innerText = '晋级快车道！';
+            document.getElementById('end-desc').innerHTML = `
+                你已财务自由！获得启动资金 <b class="text-green-500">$${(oldPassive*100).toLocaleString()}</b>。<br><br>
+                <div class="text-left bg-slate-100 dark:bg-white/10 p-3 rounded-xl text-xs space-y-2">
+                <div class="font-bold">🏆 胜利条件 (二选一):</div>
+                <div>1. 购买你的梦想: <span class="text-pink-500 font-bold">${this.state.userDream.name}</span></div>
+                <div>2. 或增加现金流: <span class="text-green-500 font-bold">+$50,000/月</span></div>
+                </div>
+            `;
+            
+            const btn = document.querySelector('#game-over-modal button');
+            btn.innerText = "开始飙车";
+            btn.onclick = () => this.closeModal();
+        },
+
+        get liabilitiesExpense() { return this.state.liabilities.reduce((sum, item) => sum + item.expense, 0); },
+        get childExpense() { return this.state.childCount * this.state.perBabyCost; },
+        get totalExpense() {
+            const loanInterest = this.state.loan * 0.1;
+            return this.state.basicTax + this.state.otherExpense + this.liabilitiesExpense + this.childExpense + loanInterest;
+        },
+        // 快车道模式下，salary 就是基础现金流日收入，passive 是新增的
+        get monthlyFlow() { 
+            if (this.state.isFastTrack) return this.state.salary + this.state.passive;
+            return (this.state.salary + this.state.passive) - this.totalExpense; 
+        },
+        get totalIncome() { return this.state.salary + this.state.passive; },
+
+        renderDiceControls() {
+            const container = document.getElementById('dice-controls');
+            if (this.state.isGameOver && !this.state.isFastTrack) {
+                container.innerHTML = ''; return;
+            }
+            container.innerHTML = '';
+
+            const disabledClass = this.isMoving ? "opacity-50 pointer-events-none" : "";
+            const commonClass = `tap-effect flex-1 bg-[#1C1C1E] dark:bg-white dark:text-black text-white rounded-2xl font-bold text-lg shadow-xl shadow-slate-300 dark:shadow-none flex items-center justify-center gap-2 active:bg-black transition-all ${disabledClass}`;
+
+            // 快车道可以随意选1或2个骰子
+            if (this.state.isFastTrack) {
+                container.innerHTML = `
+                    <button onclick="game.rollDice(1)" class="${commonClass} bg-slate-600 dark:bg-slate-200">🎲 1</button>
+                    <button onclick="game.rollDice(2)" class="${commonClass} flex-[1.5] bg-pink-600 dark:bg-pink-500 dark:text-white">🎲🎲 双骰飙车</button>
+                `;
+                return;
+            }
+
+            if (this.state.downsizedTurns > 0) {
+                container.innerHTML = `
+                    <button onclick="game.rollDice(1)" class="flex-1 bg-purple-900 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all tap-effect shadow-xl ${disabledClass}">
+                        🚫 停赛中 (${this.state.downsizedTurns}) - 跳过
+                    </button>
+                `;
+                return;
+            }
+
+            if (this.state.charityTurns > 0) {
+                container.innerHTML = `
+                    <button onclick="game.rollDice(1)" class="${commonClass}">🎲 1</button>
+                    <button onclick="game.rollDice(2)" class="${commonClass} bg-orange-500 shadow-orange-200">🎲 2</button>
+                `;
+            } else {
+                container.innerHTML = `<button onclick="game.rollDice(1)" class="${commonClass}">🎲 掷骰子</button>`;
+            }
+        },
+
+        rollDice(diceCount) {
+            if (this.state.isGameOver && !this.state.isFastTrack) return;
+            if (this.isMoving) return;
+            
+            const overlay = document.getElementById('modal-overlay');
+            if ((!overlay.classList.contains('hidden')) || overlay.style.display === 'flex') {
+                return;
+            }
+
+            if (this.state.downsizedTurns > 0) {
+                this.state.downsizedTurns--;
+                this.log(`🛋️ 停赛中... 还剩 ${this.state.downsizedTurns} 轮`);
                 this.updateUI();
+                return;
+            }
+
+            if (this.state.cash < 0) {
+                const debt = Math.abs(this.state.cash);
+                const liquidAssets = this.state.assets.filter(a => ['Stock','RealEstate','Business','Coin'].includes(a.type));
                 
-                document.getElementById('sheet-salary').innerText = this.state.salary.toLocaleString();
-                document.getElementById('game-phase-text').innerText = this.state.jobTitle;
-                document.getElementById('game-phase-badge').innerText = this.state.jobIcon;
-                
-                this.log(`🎲 职业: ${job.name} (目标: 被动收入 > 总支出)`);
-            },
-
-            get liabilitiesExpense() { return this.state.liabilities.reduce((sum, item) => sum + item.expense, 0); },
-            get childExpense() { return this.state.childCount * this.state.perBabyCost; },
-            get totalExpense() {
-                const loanInterest = this.state.loan * 0.1;
-                return this.state.basicTax + this.state.otherExpense + this.liabilitiesExpense + this.childExpense + loanInterest;
-            },
-            get monthlyFlow() { return (this.state.salary + this.state.passive) - this.totalExpense; },
-            get totalIncome() { return this.state.salary + this.state.passive; },
-
-            renderDiceControls() {
-                const container = document.getElementById('dice-controls');
-                if (this.state.isGameOver) {
-                    container.innerHTML = '';
-                    return;
-                }
-                container.innerHTML = '';
-
-                const disabledClass = this.isMoving ? "opacity-50 pointer-events-none" : "";
-
-                if (this.state.downsizedTurns > 0) {
-                    container.innerHTML = `
-                        <button onclick="game.rollDice(1)" class="flex-1 bg-purple-900 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all tap-effect shadow-xl ${disabledClass}">
-                            🚫 停赛中 (还剩${this.state.downsizedTurns}轮) - 点击跳过
-                        </button>
-                    `;
-                    return;
-                }
-
-                const commonClass = `tap-effect flex-1 bg-[#1C1C1E] dark:bg-white dark:text-black text-white rounded-2xl font-bold text-lg shadow-xl shadow-slate-300 dark:shadow-none flex items-center justify-center gap-2 active:bg-black transition-all ${disabledClass}`;
-
-                if (this.state.charityTurns > 0) {
-                    container.innerHTML = `
-                        <button onclick="game.rollDice(1)" class="${commonClass}">🎲 掷1颗</button>
-                        <button onclick="game.rollDice(2)" class="${commonClass} bg-orange-500 shadow-orange-200">🎲 掷2颗</button>
-                    `;
+                if (liquidAssets.length === 0) {
+                    if (confirm(`⚠️ 现金赤字 $${debt.toLocaleString()}！\n\n您目前没有可变卖的资产，必须向银行借款才能继续游戏。\n\n点击【确定】自动借入所需金额。`)) {
+                            const borrowAmt = Math.ceil(debt / 1000) * 1000;
+                            this.manageLoan(borrowAmt);
+                            return; 
+                    } else { return; }
                 } else {
-                    container.innerHTML = `<button onclick="game.rollDice(1)" class="${commonClass}">🎲 掷骰子</button>`;
-                }
-            },
-
-            rollDice(diceCount) {
-                if (this.state.isGameOver) return;
-                if (this.isMoving) return;
-                
-                const overlay = document.getElementById('modal-overlay');
-                if ((!overlay.classList.contains('hidden')) || overlay.style.display === 'flex') {
+                    alert("⚠️ 现金赤字！\n请点击顶部【资产 & 负债】按钮：\n1. 变卖资产\n2. 或申请银行借款\n\n直到手头现金 >= 0 方可继续。");
+                    this.toggleSheet();
                     return;
                 }
+            }
 
-                if (this.state.downsizedTurns > 0) {
-                    this.state.downsizedTurns--;
-                    this.log(`🛋️ 停赛中... 还剩 ${this.state.downsizedTurns} 轮`);
-                    this.updateUI();
-                    return;
-                }
+            if (this.state.charityTurns > 0) {
+                this.state.charityTurns--;
+            }
 
-                if (this.state.cash < 0) {
-                    const debt = Math.abs(this.state.cash);
-                    const liquidAssets = this.state.assets.filter(a => ['Stock','RealEstate','Business','Coin'].includes(a.type));
-                    
-                    if (liquidAssets.length === 0) {
-                        if (confirm(`⚠️ 现金赤字 $${debt.toLocaleString()}！\n\n您目前没有可变卖的资产，必须向银行借款才能继续游戏。\n\n点击【确定】自动借入所需金额。`)) {
-                             const borrowAmt = Math.ceil(debt / 1000) * 1000;
-                             this.manageLoan(borrowAmt);
-                             return; 
-                        } else {
-                            return;
-                        }
-                    } else {
-                        alert("⚠️ 现金赤字！\n请点击顶部【资产 & 负债】按钮：\n1. 变卖资产\n2. 或申请银行借款\n\n直到手头现金 >= 0 方可继续。");
-                        this.toggleSheet();
+            let dice = 0;
+            const d1 = Math.floor(Math.random() * 6) + 1;
+            if (diceCount === 2) {
+                const d2 = Math.floor(Math.random() * 6) + 1;
+                dice = d1 + d2;
+                this.log(`🎲 掷出了 ${d1} + ${d2} = ${dice} 点`, true);
+            } else {
+                dice = d1;
+                this.log(`🎲 掷出了 ${dice} 点`, true);
+            }
+            
+            this.isMoving = true;
+            this.updateUI(); 
+            
+            let stepsRemaining = dice;
+            // 区分地图数据
+            const tiles = this.state.isFastTrack ? CONFIG.fastTrackTiles : CONFIG.tiles;
+            let lastTime = 0;
+
+            const animateMove = (timestamp) => {
+                if (this.state.isGameOver && !this.state.isFastTrack) return;
+                if (!lastTime) lastTime = timestamp;
+                const elapsed = timestamp - lastTime;
+
+                // 动画速度：快车道稍微快一点
+                const speed = this.state.isFastTrack ? 120 : 180;
+
+                if (elapsed > speed) { 
+                    if (stepsRemaining <= 0) {
+                        this.isMoving = false;
+                        this.updateUI();
+                        this.triggerTile(tiles[this.state.pos]);
                         return;
                     }
-                }
 
-                if (this.state.charityTurns > 0) {
-                    this.state.charityTurns--;
-                }
+                    this.updatePlayerToken(this.state.pos, (this.state.pos + 1) % tiles.length);
+                    this.state.pos = (this.state.pos + 1) % tiles.length;
 
-                let dice = 0;
-                let diceMsg = '';
+                    // 经过 Pay Check
+                    if (stepsRemaining > 1) { 
+                        // 快车道 FT_Pay 也要经过领钱
+                        if (tiles[this.state.pos].type === 'Pay' || tiles[this.state.pos].type === 'FT_Pay') {
+                            this.payDay();
+                        }
+                    }
+
+                    stepsRemaining--;
+                    lastTime = timestamp;
+                }
                 
-                const d1 = Math.floor(Math.random() * 6) + 1;
-                if (diceCount === 2) {
-                    const d2 = Math.floor(Math.random() * 6) + 1;
-                    dice = d1 + d2;
-                    diceMsg = `${d1} + ${d2} = ${dice}`;
+                if (stepsRemaining >= 0) {
+                        requestAnimationFrame(animateMove);
+                }
+            };
+
+            requestAnimationFrame(animateMove);
+        },
+
+        updatePlayerToken(oldIndex, newIndex) {
+            const tiles = document.getElementById('game-board').children;
+            if (tiles[oldIndex]) {
+                tiles[oldIndex].classList.remove('active');
+                const token = tiles[oldIndex].querySelector('.player-token');
+                if (token) token.remove();
+            }
+            
+            if (tiles[newIndex]) {
+                tiles[newIndex].classList.add('active');
+                if (!tiles[newIndex].querySelector('.player-token')) {
+                    tiles[newIndex].innerHTML += `<div class="player-token"></div>`;
+                }
+                setTimeout(() => tiles[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
+            }
+        },
+
+        payDay() {
+            if (this.state.isGameOver && !this.state.isFastTrack) return;
+            
+            const flow = this.monthlyFlow;
+            this.state.cash += flow;
+            this.log(`💰 结算日：现金 +$${flow.toLocaleString()}`);
+            this.animChange('display-cash', 'positive');
+            
+            this.checkWinCondition(); // 检查是否晋级或胜利
+
+            if (!this.state.isFastTrack && this.state.cash < 0) {
+                this.checkBankruptcy();
+            }
+        },
+
+        checkBankruptcy() {
+            if (this.state.isGameOver) return;
+            const liquidAssets = this.state.assets.filter(a => a.type === 'RealEstate' || a.type === 'Business' || a.type === 'Stock');
+            
+            if (this.state.cash < 0) {
+                const debt = Math.abs(this.state.cash);
+                if (liquidAssets.length === 0 && this.monthlyFlow < 0) {
+                    document.getElementById('end-icon').innerText = '☠️';
+                    document.getElementById('end-title').innerText = "破产清算";
+                    document.getElementById('end-desc').innerText = "现金流断裂，且无资产可抵债。";
+                    this.state.isGameOver = true;
+                    this.openOverlay('game-over-modal');
+                    this.renderDiceControls(); 
                 } else {
-                    dice = d1;
-                    diceMsg = `${dice}`;
-                }
-
-                this.log(`🎲 掷出了 ${diceMsg} 点`, true);
-                
-                this.isMoving = true;
-                this.updateUI(); 
-                
-                let stepsRemaining = dice;
-                const tiles = CONFIG.tiles;
-                let lastTime = 0;
-
-                const animateMove = (timestamp) => {
-                    if (this.state.isGameOver) return;
-                    if (!lastTime) lastTime = timestamp;
-                    const elapsed = timestamp - lastTime;
-
-                    if (elapsed > 180) { 
-                        if (stepsRemaining <= 0) {
-                            this.isMoving = false;
-                            this.updateUI();
-                            this.triggerTile(tiles[this.state.pos]);
-                            return;
-                        }
-
-                        this.updatePlayerToken(this.state.pos, (this.state.pos + 1) % tiles.length);
-                        this.state.pos = (this.state.pos + 1) % tiles.length;
-
-                        if (stepsRemaining > 1) { 
-                            if (tiles[this.state.pos].type === 'Pay') {
-                                this.payDay();
-                            }
-                        }
-
-                        stepsRemaining--;
-                        lastTime = timestamp;
+                    this.log(`⚠️ 现金赤字 $${debt}，请变卖资产或借贷`, true);
+                    if (document.getElementById('sheet-modal').classList.contains('hidden')) {
+                        setTimeout(() => {
+                            this.toggleSheet(); 
+                            this.switchTab('paper', document.querySelector('.segment-btn')); 
+                        }, 500);
                     }
-                    
-                    if (stepsRemaining >= 0) {
-                         requestAnimationFrame(animateMove);
-                    }
-                };
-
-                requestAnimationFrame(animateMove);
-            },
-
-            updatePlayerToken(oldIndex, newIndex) {
-                const tiles = document.getElementById('game-board').children;
-                if (tiles[oldIndex]) {
-                    tiles[oldIndex].classList.remove('active');
-                    const token = tiles[oldIndex].querySelector('.player-token');
-                    if (token) token.remove();
                 }
-                
-                if (tiles[newIndex]) {
-                    tiles[newIndex].classList.add('active');
-                    if (!tiles[newIndex].querySelector('.player-token')) {
-                        tiles[newIndex].innerHTML += `<div class="player-token"></div>`;
-                    }
-                    // 滚动视图
-                    setTimeout(() => tiles[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
-                }
-            },
+            }
+        },
 
-            payDay() {
-                if (this.state.isGameOver) return;
-                const flow = this.monthlyFlow;
-                this.state.cash += flow;
-                this.log(`💰 结算日：现金 ${flow >= 0 ? '+' : ''}$${flow.toLocaleString()}`);
-                this.animChange('display-cash', flow >= 0 ? 'positive' : 'negative');
-                
-                this.checkWinCondition();
-
-                if (this.state.cash < 0) {
-                    this.checkBankruptcy();
-                }
-            },
-
-            checkBankruptcy() {
-                if (this.state.isGameOver) return;
-                const liquidAssets = this.state.assets.filter(a => a.type === 'RealEstate' || a.type === 'Business' || a.type === 'Stock');
-                
-                if (this.state.cash < 0) {
-                   const debt = Math.abs(this.state.cash);
-                   if (liquidAssets.length === 0 && this.monthlyFlow < 0) {
-                       document.getElementById('end-icon').innerText = '☠️';
-                       document.getElementById('end-title').innerText = "破产清算";
-                       document.getElementById('end-desc').innerText = "现金流断裂，且无资产可抵债。";
-                       this.state.isGameOver = true;
-                       this.openOverlay('game-over-modal');
-                       this.renderDiceControls(); 
-                   } else {
-                       this.log(`⚠️ 现金赤字 $${debt}，请变卖资产或借贷`, true);
-                       if (document.getElementById('sheet-modal').classList.contains('hidden')) {
-                            setTimeout(() => {
-                                this.toggleSheet(); 
-                                this.switchTab('paper', document.querySelector('.segment-btn')); 
-                            }, 500);
-                       }
-                   }
-                }
-            },
-
-            triggerTile(tile) {
-                if (this.state.isGameOver) return;
+        triggerTile(tile) {
+            if (this.state.isGameOver && !this.state.isFastTrack) return;
+            
+            // 分流：快车道 vs 老鼠赛跑
+            if (this.state.isFastTrack) {
+                this.handleFastTrackTile(tile);
+            } else {
                 switch(tile.type) {
                     case 'Pay': this.payDay(); break;
                     case 'Opp': this.openOverlay('choice-modal'); break;
@@ -821,630 +1016,736 @@
                         if (this.state.cash < 0) this.checkBankruptcy();
                         break;
                 }
-            },
+            }
+        },
 
-            triggerCharity() {
-                const cost = Math.floor(this.totalIncome * 0.1);
-                this.queueEvent({
-                    type: 'INFO_DECISION',
-                    data: {
-                        name: '慈善捐赠',
-                        desc: `捐赠总收入的 10% ($${cost})？<br>好处：接下来3个回合可选用2颗骰子。`,
-                        icon: '💜',
+        // 快车道事件处理
+        handleFastTrackTile(tile) {
+            switch(tile.type) {
+                case 'FT_Pay':
+                    this.payDay();
+                    break;
+                case 'FT_Biz':
+                    const deal = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
+                    // 随机浮动一点数值
+                    const flow = deal.flow + (Math.floor(Math.random()*5)*1000);
+                    const cost = deal.cost + (Math.floor(Math.random()*5)*10000);
+                    
+                    this.showCardModal('OPP', {
+                        name: deal.name,
+                        type: 'Business',
                         cost: cost,
-                        onConfirm: () => {
-                            if(this.state.cash >= cost) {
-                                this.state.cash -= cost;
-                                this.state.charityTurns = 3;
-                                this.log(`💜 捐赠成功，特权生效！`, true);
-                                this.updateUI();
-                            } else {
-                                this.log('现金不足');
+                        down: cost, 
+                        flow: flow,
+                        desc: deal.desc,
+                        icon: deal.icon
+                    });
+                    break;
+                case 'FT_Dream':
+                    // 逻辑：如果是我的梦想 -> 赢。如果是别人的 -> 只是好玩。
+                    // 30% 几率刷出玩家自己的梦想，或者如果正好落在粉色格且未买
+                    const isMyDream = (Math.random() > 0.7); 
+                    const dream = isMyDream ? this.state.userDream : CONFIG.dreams[Math.floor(Math.random() * CONFIG.dreams.length)];
+                    
+                    this.queueEvent({
+                        type: 'INFO_DECISION',
+                        data: {
+                            name: `梦想: ${dream.name}`,
+                            desc: (isMyDream || dream.id === this.state.userDream.id)
+                                ? `💖 <b>这是你梦寐以求的！</b><br>支付 $${dream.cost.toLocaleString()} 购买并<b>赢得游戏</b>！` 
+                                : `这是别人的梦想，但你也可以买下来作为一种成就。<br>成本: $${dream.cost.toLocaleString()}`,
+                            icon: dream.icon,
+                            cost: dream.cost,
+                            onConfirm: () => {
+                                if (this.state.cash >= dream.cost) {
+                                    this.state.cash -= dream.cost;
+                                    if (dream.id === this.state.userDream.id) {
+                                        this.winGame('DREAM');
+                                    } else {
+                                        this.log(`😎 你购买了 ${dream.name}，虽然这不是你的终极目标。`);
+                                        this.updateUI();
+                                    }
+                                } else {
+                                    this.log('现金不足', true);
+                                }
                             }
                         }
+                    });
+                    this.processQueue();
+                    break;
+                case 'FT_Charity':
+                    this.triggerCharity();
+                    break;
+                case 'FT_Hazard':
+                    if (tile.effect === 'audit') {
+                        this.log('👮 税务审计！失去一半现金。', true);
+                        this.state.cash = Math.floor(this.state.cash / 2);
+                    } else if (tile.effect === 'divorce') {
+                        this.log('💔 离婚！失去所有现金。', true);
+                        this.state.cash = 0;
+                    } else if (tile.effect === 'lawsuit') {
+                        const cost = Math.floor(this.state.cash / 2);
+                        this.log(`⚖️ 遭遇官司！支付 $${cost.toLocaleString()} 律师费`, true);
+                        this.state.cash -= cost;
                     }
-                });
-                this.processQueue();
-            },
+                    this.updateUI();
+                    break;
+            }
+        },
 
-            manageLoan(amount) {
-                if (!amount) return;
-                
-                if (amount > 0) {
-                    this.state.loan += amount;
-                    this.state.cash += amount;
-                    this.log(`🏦 借入 $${amount}`);
-                } else {
-                    let repay = Math.abs(amount);
-                    if (this.state.loan < repay) {
-                        repay = this.state.loan;
-                    }
-
-                    if (repay <= 0) {
-                         this.log("🏦 无贷款需偿还");
-                         return;
-                    }
-
-                    if (this.state.cash >= repay) {
-                        this.state.loan -= repay;
-                        this.state.cash -= repay;
-                        this.log(`🏦 还款 $${repay}`);
-                    } else {
-                         this.log("⚠️ 现金不足以还款", true);
-                         const panel = document.querySelector('.loan-panel');
-                         if(panel) {
-                             panel.classList.add('shake-anim');
-                             setTimeout(()=>panel.classList.remove('shake-anim'), 400);
-                         }
-                    }
-                }
-                this.updateUI();
-                this.renderSheet('debt');
-            },
-
-            quickLoan() {
-                const sheet = document.getElementById('sheet-modal');
-                const isHidden = sheet.classList.contains('hidden');
-                
-                if (isHidden) {
-                    this.renderSheet('debt');
-                    sheet.style.display = 'flex'; 
-                    sheet.classList.remove('hidden');
-                    
-                    this.state.currentTab = 'debt';
-                    document.querySelectorAll('.segment-btn').forEach(el => el.classList.remove('active'));
-                    document.querySelectorAll('.segment-btn')[1].classList.add('active'); 
-                    document.getElementById('panel-invest').classList.add('hidden');
-                    document.getElementById('panel-debt').classList.remove('hidden');
-                } else {
-                    this.toggleSheet();
-                }
-            },
-            
-            promptPayLiability(id) {
-                const item = this.state.liabilities.find(l => String(l.id) === String(id));
-                if (!item) return;
-
-                this.toggleSheet();
-
-                this.queueEvent({
-                    type: 'INFO_DECISION',
-                    data: {
-                        name: `偿还: ${item.name}`,
-                        desc: `支付 $${item.balance.toLocaleString()} 以消除每月 $${item.expense} 的支出。<br>这将增加你的月现金流。`,
-                        icon: '💳',
-                        cost: item.balance,
-                        onConfirm: () => {
-                            this.payLiabilityExec(item.id);
+        triggerCharity() {
+            const cost = Math.floor(this.totalIncome * 0.1);
+            this.queueEvent({
+                type: 'INFO_DECISION',
+                data: {
+                    name: '慈善捐赠',
+                    desc: `捐赠总收入的 10% ($${cost.toLocaleString()})？<br>好处：接下来3个回合可选用2颗骰子。`,
+                    icon: '💜',
+                    cost: cost,
+                    onConfirm: () => {
+                        if(this.state.cash >= cost) {
+                            this.state.cash -= cost;
+                            this.state.charityTurns = 3;
+                            this.log(`💜 捐赠成功，特权生效！`, true);
+                            this.updateUI();
+                        } else {
+                            this.log('现金不足');
                         }
                     }
-                });
-                this.processQueue();
-            },
-
-            payLiabilityExec(id) {
-                const item = this.state.liabilities.find(l => String(l.id) === String(id));
-                if (!item) return;
-
-                if (this.state.cash >= item.balance) {
-                    this.state.cash -= item.balance;
-                    this.state.liabilities = this.state.liabilities.filter(l => String(l.id) !== String(id));
-                    this.log(`💸 已还清 ${item.name}`);
-                    this.updateUI();
-                    this.checkWinCondition();
-                } else {
-                    this.log('现金不足', true);
                 }
-            },
+            });
+            this.processQueue();
+        },
 
-            liquidateAsset(id) {
-                const assetIdx = this.state.assets.findIndex(a => a.id === id);
-                if (assetIdx === -1) return;
-                const asset = this.state.assets[assetIdx];
+        manageLoan(amount) {
+            if (!amount) return;
+            if (this.state.isFastTrack) return; // 快车道不能贷款（简化规则）
 
-                if (asset.type === 'Stock' || asset.type === 'Option') {
-                    const recoup = Math.floor((asset.cost * asset.quantity) / 2);
-                    if (!confirm(`【紧急抛售】银行半价回收股票，得款 $${recoup}。确定？`)) return;
-                    this.state.cash += recoup;
+            if (amount > 0) {
+                this.state.loan += amount;
+                this.state.cash += amount;
+                this.log(`🏦 借入 $${amount}`);
+            } else {
+                let repay = Math.abs(amount);
+                if (this.state.loan < repay) repay = this.state.loan;
+                if (repay <= 0) { this.log("🏦 无贷款需偿还"); return; }
+
+                if (this.state.cash >= repay) {
+                    this.state.loan -= repay;
+                    this.state.cash -= repay;
+                    this.log(`🏦 还款 $${repay}`);
                 } else {
-                    const returnCash = Math.floor(asset.down / 2);
-                    if (!confirm(`【资产抛售】折价卖给银行，收回首付的一半: $${returnCash}。确定吗？`)) return;
-                    this.state.passive -= (asset.flow || 0);
-                    this.state.cash += returnCash;
+                    this.log("⚠️ 现金不足以还款", true);
+                    const panel = document.querySelector('.loan-panel');
+                    if(panel) {
+                        panel.classList.add('shake-anim');
+                        setTimeout(()=>panel.classList.remove('shake-anim'), 400);
+                    }
                 }
+            }
+            this.updateUI();
+            this.renderSheet('debt');
+        },
 
-                this.state.assets.splice(assetIdx, 1);
-                this.log(`💸 资产已变卖`);
+        quickLoan() {
+            const sheet = document.getElementById('sheet-modal');
+            const isHidden = sheet.classList.contains('hidden');
+            
+            if (isHidden) {
+                this.renderSheet('debt');
+                sheet.style.display = 'flex'; 
+                sheet.classList.remove('hidden');
+                
+                this.state.currentTab = 'debt';
+                document.querySelectorAll('.segment-btn').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.segment-btn')[1].classList.add('active'); 
+                document.getElementById('panel-invest').classList.add('hidden');
+                document.getElementById('panel-debt').classList.remove('hidden');
+            } else {
+                this.toggleSheet();
+            }
+        },
+        
+        promptPayLiability(id) {
+            const item = this.state.liabilities.find(l => String(l.id) === String(id));
+            if (!item) return;
+
+            this.toggleSheet();
+
+            this.queueEvent({
+                type: 'INFO_DECISION',
+                data: {
+                    name: `偿还: ${item.name}`,
+                    desc: `支付 $${item.balance.toLocaleString()} 以消除每月 $${item.expense} 的支出。<br>这将增加你的月现金流。`,
+                    icon: '💳',
+                    cost: item.balance,
+                    onConfirm: () => {
+                        this.payLiabilityExec(item.id);
+                    }
+                }
+            });
+            this.processQueue();
+        },
+
+        payLiabilityExec(id) {
+            const item = this.state.liabilities.find(l => String(l.id) === String(id));
+            if (!item) return;
+
+            if (this.state.cash >= item.balance) {
+                this.state.cash -= item.balance;
+                this.state.liabilities = this.state.liabilities.filter(l => String(l.id) !== String(id));
+                this.log(`💸 已还清 ${item.name}`);
                 this.updateUI();
-                this.renderSheet('paper');
-            },
+                this.checkWinCondition();
+            } else {
+                this.log('现金不足', true);
+            }
+        },
 
-            chooseDeal(type) {
-                if (type === 'Big' && this.state.cash < 500) { 
-                    this.log("⚠️ 现金过少"); return;
-                }
-                const deck = type === 'Big' ? CONFIG.bigDeals : CONFIG.smallDeals;
-                const card = deck[Math.floor(Math.random() * deck.length)];
-                
-                if (card.type === 'Option') {
-                    this.showCardModal('OPTION_BUY', JSON.parse(JSON.stringify(card)));
+        liquidateAsset(id) {
+            const assetIdx = this.state.assets.findIndex(a => a.id === id);
+            if (assetIdx === -1) return;
+            const asset = this.state.assets[assetIdx];
+
+            if (this.state.isFastTrack) return; // 快车道资产一般不卖
+
+            if (asset.type === 'Stock' || asset.type === 'Option') {
+                const recoup = Math.floor((asset.cost * asset.quantity) / 2);
+                if (!confirm(`【紧急抛售】银行半价回收股票，得款 $${recoup}。确定？`)) return;
+                this.state.cash += recoup;
+            } else {
+                const returnCash = Math.floor(asset.down / 2);
+                if (!confirm(`【资产抛售】折价卖给银行，收回首付的一半: $${returnCash}。确定吗？`)) return;
+                this.state.passive -= (asset.flow || 0);
+                this.state.cash += returnCash;
+            }
+
+            this.state.assets.splice(assetIdx, 1);
+            this.log(`💸 资产已变卖`);
+            this.updateUI();
+            this.renderSheet('paper');
+        },
+
+        chooseDeal(type) {
+            if (type === 'Big' && this.state.cash < 500) { 
+                this.log("⚠️ 现金过少"); return;
+            }
+            const deck = type === 'Big' ? CONFIG.bigDeals : CONFIG.smallDeals;
+            const card = deck[Math.floor(Math.random() * deck.length)];
+            this.showCardModal('OPP', JSON.parse(JSON.stringify(card)));
+        },
+
+        queueEvent(event) {
+            if (this.state.isGameOver && !this.state.isFastTrack && event.type !== 'INFO_DECISION') return;
+            this.state.eventQueue.push(event);
+        },
+
+        processQueue() {
+            // 如果已经胜利了，就不再处理队列，除非是胜利弹窗
+            // 这里简单放行
+            if (this.state.eventQueue.length === 0) return;
+            
+            const overlay = document.getElementById('modal-overlay');
+            if (!overlay.classList.contains('hidden') || overlay.style.display !== 'none') return; 
+
+            const nextEvent = this.state.eventQueue.shift();
+            
+            if (uiTimer) clearTimeout(uiTimer);
+            
+            uiTimer = setTimeout(() => {
+                this.showCardModal(nextEvent.type, nextEvent.data);
+            }, 100);
+        },
+
+        handleMarket(card) {
+            // 老鼠赛跑市场逻辑
+            if (card.type === 'Buyer') {
+                const assets = this.state.assets.filter(a => a.name === card.target);
+                if (assets.length > 0) {
+                    assets.forEach(asset => {
+                        const loan = asset.cost - asset.down;
+                        const netCash = card.price - loan;
+                        let actionName = `出售: ${card.target}`;
+                        let icon = '🤝';
+                        if (asset.type === 'Business') { actionName = '企业退出/IPO'; icon = '🏢'; }
+                        if (asset.type === 'Asset') { actionName = '资产变现'; icon = '💰'; }
+
+                        this.queueEvent({
+                            type: 'MARKET_SELL',
+                            data: {
+                                id: uuid(), 
+                                name: actionName, 
+                                desc: `${card.desc}<br><br>
+                                        <div class="text-xs bg-slate-100 dark:bg-white/10 p-2 rounded">
+                                        卖出价: <b>$${card.price.toLocaleString()}</b><br>
+                                        偿还贷款: -$${loan.toLocaleString()}<br>
+                                        <div class="border-t border-slate-300 dark:border-white/20 my-1"></div>
+                                        净得现金: <b class="text-green-600">$${netCash.toLocaleString()}</b>
+                                        </div>`,
+                                icon: icon, 
+                                sellPrice: card.price, 
+                                targetAssetId: asset.id, 
+                                roi: netCash 
+                            }
+                        });
+                    });
                 } else {
-                    this.showCardModal('OPP', JSON.parse(JSON.stringify(card)));
+                        this.log(`📰 市场: ${card.desc}`);
                 }
-            },
-
-            queueEvent(event) {
-                if (this.state.isGameOver) return;
-                this.state.eventQueue.push(event);
-            },
-
-            processQueue() {
-                if (this.state.isGameOver) return;
-                if (this.state.eventQueue.length === 0) return;
-                
-                const overlay = document.getElementById('modal-overlay');
-                if (!overlay.classList.contains('hidden') || overlay.style.display !== 'none') return; 
-
-                const nextEvent = this.state.eventQueue.shift();
-                
-                if (uiTimer) clearTimeout(uiTimer);
-                
-                uiTimer = setTimeout(() => {
-                    this.showCardModal(nextEvent.type, nextEvent.data);
-                }, 100);
-            },
-
-            handleMarket(card) {
-                // 逻辑优化：自动处理所有类型的资产变现（房产、金币、公司）
-                if (card.type === 'Buyer') {
-                    // 查找玩家持有的同名资产
-                    const assets = this.state.assets.filter(a => a.name === card.target);
-                    
-                    if (assets.length > 0) {
-                        assets.forEach(asset => {
-                            // 计算逻辑：卖出价 - (总成本 - 首付) = 净拿回现金
-                            // 对于房产：(Cost - Down) 是银行贷款，卖出时要还掉
-                            // 对于金币/IPO：Cost 等于 Down，没有贷款，所以 Net = Price
-                            const loan = asset.cost - asset.down;
-                            const netCash = card.price - loan;
-                            const profit = netCash - asset.down; // 净利润，仅用于展示
-
-                            // 根据资产类型生成更有趣的文案
-                            let actionName = `出售: ${card.target}`;
-                            let icon = '🤝';
-                            if (asset.type === 'Business') { actionName = '企业退出/IPO'; icon = '🏢'; }
-                            if (asset.type === 'Asset') { actionName = '资产变现'; icon = '💰'; }
-
+            } 
+            else if (card.type === 'PriceChange') {
+                const stocks = this.state.assets.filter(a => a.symbol === card.symbol && a.type === 'Stock');
+                if (stocks.length > 0) {
+                    stocks.forEach(stock => {
+                        if (stock.quantity > 0) { 
+                            const totalValue = stock.quantity * card.price;
+                            const profit = totalValue - (stock.quantity * stock.cost);
+                            
                             this.queueEvent({
                                 type: 'MARKET_SELL',
                                 data: {
-                                    id: uuid(), 
-                                    name: actionName, 
-                                    desc: `${card.desc}<br><br>
-                                           <div class="text-xs bg-slate-100 dark:bg-white/10 p-2 rounded">
-                                           卖出价: <b>$${card.price.toLocaleString()}</b><br>
-                                           偿还贷款: -$${loan.toLocaleString()}<br>
-                                           <div class="border-t border-slate-300 dark:border-white/20 my-1"></div>
-                                           净得现金: <b class="text-green-600">$${netCash.toLocaleString()}</b>
-                                           </div>`,
-                                    icon: icon, 
-                                    sellPrice: card.price, 
-                                    targetAssetId: asset.id, 
-                                    roi: netCash // 这里传给 confirmCardAction 的是净得现金
+                                    id: uuid(),
+                                    name: `行情: ${card.symbol} $${card.price}`,
+                                    desc: `${card.desc}<br>
+                                            你有 ${stock.quantity} 股 (均价 $${Math.floor(stock.cost)})。<br><br>
+                                            <div class="flex justify-between text-xs font-bold">
+                                                <span>市值: $${totalValue.toLocaleString()}</span>
+                                                <span class="${profit>=0?'text-green-500':'text-red-500'}">
+                                                ${profit>=0?'+':''}$${profit.toLocaleString()}
+                                                </span>
+                                            </div>`,
+                                    icon: '📈',
+                                    sellPrice: totalValue, 
+                                    targetAssetId: stock.id,
+                                    roi: totalValue 
                                 }
                             });
-                        });
-                    } else {
-                        // 玩家没有该资产，仅显示新闻
-                         this.log(`📰 市场: ${card.desc}`);
-                    }
-                } 
-                else if (card.type === 'PriceChange') {
-                    const stocks = this.state.assets.filter(a => a.symbol === card.symbol && a.type === 'Stock');
-                    if (stocks.length > 0) {
-                        stocks.forEach(stock => {
-                            if (stock.quantity > 0) { 
-                                const totalValue = stock.quantity * card.price;
-                                const costBasis = stock.quantity * stock.cost;
-                                const profit = totalValue - costBasis;
-                                
-                                this.queueEvent({
-                                    type: 'MARKET_SELL',
-                                    data: {
-                                        id: uuid(),
-                                        name: `行情: ${card.symbol} $${card.price}`,
-                                        desc: `${card.desc}<br>
-                                               你有 ${stock.quantity} 股 (均价 $${Math.floor(stock.cost)})。<br><br>
-                                               <div class="flex justify-between text-xs font-bold">
-                                                 <span>市值: $${totalValue.toLocaleString()}</span>
-                                                 <span class="${profit>=0?'text-green-500':'text-red-500'}">
-                                                   ${profit>=0?'+':''}$${profit.toLocaleString()}
-                                                 </span>
-                                               </div>`,
-                                        icon: '📈',
-                                        sellPrice: totalValue, 
-                                        targetAssetId: stock.id,
-                                        roi: totalValue 
-                                    }
-                                });
-                            }
-                        });
-                    } else {
-                         this.log(`📰 市场: ${card.symbol} 现价 $${card.price}`);
-                    }
+                        }
+                    });
+                } else {
+                        this.log(`📰 市场: ${card.symbol} 现价 $${card.price}`);
                 }
-                else if (card.type === 'Inflation') {
-                     this.log(`📰 市场: ${card.desc}`);
+            }
+            else if (card.type === 'Inflation') {
+                    this.log(`📰 市场: ${card.desc}`);
+            }
+            this.processQueue();
+        },
+
+        showCardModal(type, data) {
+            if (this.state.isGameOver && !this.state.isFastTrack) return;
+            if (uiTimer) clearTimeout(uiTimer);
+
+            this.state.currentCard = { ...data, actionType: type };
+            this.state.inputQty = 100; 
+            
+            this.openOverlay('card-modal');
+            
+            document.getElementById('modal-cash-display').innerText = Math.floor(this.state.cash).toLocaleString();
+
+            const title = document.getElementById('card-title');
+            const desc = document.getElementById('card-desc');
+            const icon = document.getElementById('card-icon-bg');
+            const financials = document.getElementById('card-financials');
+            const inputArea = document.getElementById('input-area');
+            const btnAction = document.getElementById('btn-card-action');
+            const btnShort = document.getElementById('btn-short-action');
+            const btnCancel = document.getElementById('btn-cancel');
+            const tag = document.getElementById('card-tag');
+            const inputPrice = document.getElementById('input-price-per');
+
+            title.innerText = data.name;
+            desc.innerHTML = data.desc;
+            desc.className = "text-slate-500 dark:text-slate-400 text-sm mt-3 leading-relaxed px-2"; 
+            icon.innerText = data.icon || '📄';
+            tag.innerText = type === 'OPP' ? (data.type === 'Business' ? 'Big Deal' : 'Deal') : type;
+            tag.classList.remove('hidden');
+
+            financials.classList.add('hidden');
+            inputArea.classList.add('hidden');
+            btnShort.classList.add('hidden');
+            btnAction.classList.remove('hidden');
+            btnCancel.classList.remove('hidden'); 
+            
+            btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
+
+            if (type === 'OPP') {
+                if (data.type === 'Stock') {
+                    inputArea.classList.remove('hidden');
+                    inputPrice.innerText = `$${data.cost}`;
+                    this.updateInputTotal(); 
+                    btnAction.innerText = '现金买入';
+                } else {
+                    financials.classList.remove('hidden');
+                    document.getElementById('lbl-cost').innerText = '总价';
+                    document.getElementById('val-cost').innerText = `$${data.cost.toLocaleString()}`;
+                    document.getElementById('lbl-down').innerText = '首付/成本';
+                    document.getElementById('val-down').innerText = `$${data.down.toLocaleString()}`;
+                    document.getElementById('val-flow').innerText = `+$${data.flow.toLocaleString()}`;
+                    btnAction.innerText = this.state.isFastTrack ? '投资项目' : '购买资产';
                 }
-                this.processQueue();
-            },
-
-            showCardModal(type, data) {
-                if (this.state.isGameOver) return;
-                if (uiTimer) clearTimeout(uiTimer);
-
-                this.state.currentCard = { ...data, actionType: type };
-                this.state.inputQty = 100; 
-                
-                this.openOverlay('card-modal');
-                
-                // 更新模态框上的现金显示
-                document.getElementById('modal-cash-display').innerText = Math.floor(this.state.cash).toLocaleString();
-
-                const title = document.getElementById('card-title');
-                const desc = document.getElementById('card-desc');
-                const icon = document.getElementById('card-icon-bg');
-                const financials = document.getElementById('card-financials');
-                const inputArea = document.getElementById('input-area');
-                const btnAction = document.getElementById('btn-card-action');
-                const btnShort = document.getElementById('btn-short-action');
-                const btnCancel = document.getElementById('btn-cancel');
-                const tag = document.getElementById('card-tag');
-                const inputPrice = document.getElementById('input-price-per');
-
-                title.innerText = data.name;
-                desc.innerHTML = data.desc;
-                desc.className = "text-slate-500 dark:text-slate-400 text-sm mt-3 leading-relaxed px-2"; 
-                icon.innerText = data.icon || '📄';
-                tag.innerText = type === 'OPP' ? (data.type === 'Business' ? 'Big Deal' : 'Deal') : type;
-                tag.classList.remove('hidden');
-
+            } 
+            else if (type === 'MARKET_SELL') {
+                btnAction.innerText = '确认卖出';
+                btnAction.classList.replace('bg-blue-600', 'bg-green-600');
                 financials.classList.add('hidden');
-                inputArea.classList.add('hidden');
-                btnShort.classList.add('hidden');
-                btnAction.classList.remove('hidden');
-                btnCancel.classList.remove('hidden'); 
-                
-                btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
+            }
+            else if (type === 'DOODAD') {
+                tag.classList.add('hidden');
+                financials.classList.add('hidden');
+                btnCancel.classList.add('hidden');
+                desc.className = "text-3xl font-bold text-slate-900 dark:text-white my-6 text-center tracking-tight"; 
+                desc.innerText = `-$${data.cost.toLocaleString()}`;
+                btnAction.innerText = `支付`; 
+                btnAction.classList.replace('bg-blue-600', 'bg-red-500');
+            }
+            else if (type === 'INFO_DECISION') {
+                btnAction.innerText = `确认 ($${data.cost.toLocaleString()})`;
+            }
+        },
 
-                if (type === 'OPP') {
-                    if (data.type === 'Stock') {
-                        inputArea.classList.remove('hidden');
-                        inputPrice.innerText = `$${data.cost}`;
-                        this.updateInputTotal(); 
-                        btnAction.innerText = '现金买入';
-                        if (data.allowShort) {
-                            btnShort.classList.remove('hidden');
-                            btnShort.innerText = `做空`;
-                        }
-                    } else {
-                        financials.classList.remove('hidden');
-                        document.getElementById('lbl-cost').innerText = '总价';
-                        document.getElementById('val-cost').innerText = `$${data.cost.toLocaleString()}`;
-                        document.getElementById('lbl-down').innerText = '首付';
-                        document.getElementById('val-down').innerText = `$${data.down.toLocaleString()}`;
-                        document.getElementById('val-flow').innerText = `+$${data.flow.toLocaleString()}`;
-                        btnAction.innerText = '购买资产';
-                    }
-                } 
-                else if (type === 'MARKET_SELL') {
-                    btnAction.innerText = '确认卖出';
-                    btnAction.classList.replace('bg-blue-600', 'bg-green-600');
-                    financials.classList.add('hidden');
-                }
-                else if (type === 'DOODAD') {
-                    tag.classList.add('hidden');
-                    financials.classList.add('hidden');
-                    btnCancel.classList.add('hidden');
-                    
-                    // 修复：移除 font-mono，改为 font-bold
-                    desc.className = "text-3xl font-bold text-slate-900 dark:text-white my-6 text-center tracking-tight"; 
-                    desc.innerText = `-$${data.cost.toLocaleString()}`;
-                    
-                    btnAction.innerText = `支付`; 
-                    btnAction.classList.replace('bg-blue-600', 'bg-red-500');
-                }
-                else if (type === 'INFO_DECISION') {
-                    btnAction.innerText = `确认 ($${data.cost})`;
-                }
-            },
+        manualInputShares(val) {
+            const num = parseInt(val) || 0;
+            this.state.inputQty = num < 0 ? 0 : num;
+            this.updateInputTotal();
+        },
 
-            manualInputShares(val) {
-                const num = parseInt(val) || 0;
-                this.state.inputQty = num < 0 ? 0 : num;
-                this.updateInputTotal();
-            },
+        adjustShares(delta) {
+            let newQty = this.state.inputQty + delta;
+            if (newQty < 0) newQty = 0;
+            this.state.inputQty = newQty;
+            document.getElementById('input-qty-field').value = newQty;
+            this.updateInputTotal();
+        },
 
-            adjustShares(delta) {
-                let newQty = this.state.inputQty + delta;
-                if (newQty < 0) newQty = 0;
-                this.state.inputQty = newQty;
-                document.getElementById('input-qty-field').value = newQty;
-                this.updateInputTotal();
-            },
+        updateInputTotal() {
+            const card = this.state.currentCard;
+            if (card && card.cost) {
+                document.getElementById('input-total').innerText = '$' + (this.state.inputQty * card.cost).toLocaleString();
+            }
+        },
 
-            updateInputTotal() {
-                const card = this.state.currentCard;
-                if (card && card.cost) {
-                    document.getElementById('input-total').innerText = '$' + (this.state.inputQty * card.cost).toLocaleString();
-                }
-            },
+        confirmCardAction(intent) {
+            const card = this.state.currentCard;
+            if (!card) return; 
 
-            confirmCardAction(intent) {
-                const card = this.state.currentCard;
-                if (!card) return; 
-
-                if (card.actionType === 'INFO_DECISION') {
-                     if (card.onConfirm) card.onConfirm();
-                }
-                else if (card.actionType === 'OPP') {
-                    if (card.type === 'Stock') {
-                        const cost = card.cost * this.state.inputQty;
-                        if (intent === 'BUY') {
-                            if (this.state.cash >= cost) {
-                                const existingStock = this.state.assets.find(a => a.type === 'Stock' && a.symbol === card.symbol);
-                                
-                                if (existingStock) {
-                                    const oldTotalCost = existingStock.cost * existingStock.quantity;
-                                    const newTotalCost = cost;
-                                    const newQty = existingStock.quantity + this.state.inputQty;
-                                    
-                                    this.state.cash -= cost;
-                                    existingStock.quantity = newQty;
-                                    existingStock.cost = (oldTotalCost + newTotalCost) / newQty;
-                                    
-                                    this.log(`🛒 加仓 ${card.symbol} (+${this.state.inputQty}股)`);
-                                } else {
-                                    this.state.cash -= cost;
-                                    this.state.assets.push({ ...card, id: uuid(), quantity: this.state.inputQty, displayName: card.name });
-                                    this.log(`🛒 买入 ${card.symbol}`);
-                                }
-                            } else { this.shakeModal(); return; }
-                        } else if (intent === 'SHORT') {
-                             this.state.cash += cost;
-                             this.state.assets.push({ ...card, id: uuid(), quantity: -this.state.inputQty, displayName: card.name });
-                             this.log(`📉 做空 ${card.symbol}`);
-                        }
-                    } else {
-                        if (this.state.cash >= card.down) {
-                            this.state.cash -= card.down;
-                            this.state.assets.push({ ...card, id: uuid() });
-                            this.state.passive += card.flow;
-                            this.log(`🏠 购入资产: +$${card.flow.toLocaleString()}/月`);
+            if (card.actionType === 'INFO_DECISION') {
+                    if (card.onConfirm) card.onConfirm();
+            }
+            else if (card.actionType === 'OPP') {
+                if (card.type === 'Stock') {
+                    const cost = card.cost * this.state.inputQty;
+                    if (intent === 'BUY') {
+                        if (this.state.cash >= cost) {
+                            const existingStock = this.state.assets.find(a => a.type === 'Stock' && a.symbol === card.symbol);
+                            if (existingStock) {
+                                const oldTotalCost = existingStock.cost * existingStock.quantity;
+                                const newTotalCost = cost;
+                                const newQty = existingStock.quantity + this.state.inputQty;
+                                this.state.cash -= cost;
+                                existingStock.quantity = newQty;
+                                existingStock.cost = (oldTotalCost + newTotalCost) / newQty;
+                                this.log(`🛒 加仓 ${card.symbol} (+${this.state.inputQty}股)`);
+                            } else {
+                                this.state.cash -= cost;
+                                this.state.assets.push({ ...card, id: uuid(), quantity: this.state.inputQty, displayName: card.name });
+                                this.log(`🛒 买入 ${card.symbol}`);
+                            }
                         } else { this.shakeModal(); return; }
                     }
+                } else {
+                    // 房产或企业
+                    if (this.state.cash >= card.down) {
+                        this.state.cash -= card.down;
+                        this.state.assets.push({ ...card, id: uuid() });
+                        this.state.passive += card.flow;
+                        
+                        // 快车道特殊逻辑：现金流累加
+                        if (this.state.isFastTrack) {
+                            this.state.ftAddedCashflow += card.flow;
+                            this.state.salary += card.flow; // 快车道上salary视作现金流日收入基数
+                            this.log(`🚀 投资成功! 现金流 +$${card.flow.toLocaleString()}`);
+                        } else {
+                            this.log(`🏠 购入资产: +$${card.flow.toLocaleString()}/月`);
+                        }
+                    } else { this.shakeModal(); return; }
                 }
-                else if (card.actionType === 'MARKET_SELL') {
-                    this.state.cash += card.roi;
-                    const idx = this.state.assets.findIndex(a => a.id === card.targetAssetId);
-                    if (idx > -1) {
-                         if (this.state.assets[idx].flow) this.state.passive -= this.state.assets[idx].flow;
-                         this.state.assets.splice(idx, 1);
-                    }
-                    this.log(`💰 资产变现成功`);
+            }
+            else if (card.actionType === 'MARKET_SELL') {
+                this.state.cash += card.roi;
+                const idx = this.state.assets.findIndex(a => a.id === card.targetAssetId);
+                if (idx > -1) {
+                        if (this.state.assets[idx].flow) this.state.passive -= this.state.assets[idx].flow;
+                        this.state.assets.splice(idx, 1);
                 }
-                else if (card.actionType === 'DOODAD') {
-                    if(this.state.cash < card.cost) {
-                         const needed = card.cost - this.state.cash;
-                         const loanAmt = Math.ceil(needed / 1000) * 1000;
-                         if (loanAmt > 0) this.manageLoan(loanAmt);
-                    }
-                    this.state.cash -= card.cost;
-                    this.log(`💸 支付 $${card.cost}`);
+                this.log(`💰 资产变现成功`);
+            }
+            else if (card.actionType === 'DOODAD') {
+                if(this.state.cash < card.cost) {
+                        const needed = card.cost - this.state.cash;
+                        const loanAmt = Math.ceil(needed / 1000) * 1000;
+                        if (loanAmt > 0) this.manageLoan(loanAmt);
                 }
+                this.state.cash -= card.cost;
+                this.log(`💸 支付 $${card.cost}`);
+            }
 
-                this.checkWinCondition();
-                this.updateUI();
-                
-                // 修复：如果游戏结束（已胜利），不要关闭弹窗，以免胜利画面一闪而过导致卡死
-                if (!this.state.isGameOver) {
-                    this.closeModal();
+            this.checkWinCondition();
+            this.updateUI();
+            
+            // 只有游戏未结束才关闭弹窗，避免胜利弹窗被自动关闭
+            if (!this.state.isGameOver) {
+                this.closeModal();
+            }
+        },
+
+        shakeModal() {
+            const m = document.getElementById('card-modal');
+            m.classList.remove('modal-enter'); m.classList.add('shake-anim');
+            setTimeout(() => m.classList.remove('shake-anim'), 400);
+        },
+
+        checkWinCondition() {
+            if (this.state.isGameOver) return; 
+
+            if (this.state.isFastTrack) {
+                // 快车道胜利：新增现金流 > 50000
+                if (this.state.ftAddedCashflow >= 50000) {
+                    this.winGame('CASHFLOW');
                 }
-            },
-
-            shakeModal() {
-                const m = document.getElementById('card-modal');
-                m.classList.remove('modal-enter'); m.classList.add('shake-anim');
-                setTimeout(() => m.classList.remove('shake-anim'), 400);
-            },
-
-            checkWinCondition() {
-                if (this.state.isGameOver) return; 
-
+            } else {
+                // 老鼠赛跑晋级：被动收入 > 总支出
                 const totalExp = this.totalExpense;
                 if (this.state.passive > totalExp) {
-                     this.state.isGameOver = true; 
-                     this.isMoving = false; 
-                     
-                     setTimeout(() => {
-                         if (uiTimer) clearTimeout(uiTimer);
-                         this.state.eventQueue = [];
-    
-                         document.getElementById('end-icon').innerText = '🏆';
-                         document.getElementById('end-title').innerText = '财务自由！';
-                         document.getElementById('end-desc').innerHTML = `恭喜！你的被动收入($${this.state.passive.toLocaleString()})已超过总支出($${totalExp.toLocaleString()})。<br>你成功逃离了老鼠赛跑！`;
-                         
-                         const sheet = document.getElementById('sheet-modal');
-                         sheet.classList.add('hidden');
-                         sheet.style.display = 'none';
-    
-                         this.openOverlay('game-over-modal');
-                         document.getElementById('dice-controls').innerHTML = '';
-                     }, 50);
+                    this.enterFastTrack();
                 }
-            },
-
-            toggleSheet() {
-                const sheet = document.getElementById('sheet-modal');
-                if (sheet.classList.contains('hidden')) {
-                    this.renderSheet(this.state.currentTab);
-                    sheet.style.display = 'flex'; sheet.classList.remove('hidden');
-                } else {
-                    sheet.style.display = 'none'; sheet.classList.add('hidden');
-                }
-            },
-
-            switchTab(tab, btn) {
-                this.state.currentTab = tab;
-                document.querySelectorAll('.segment-btn').forEach(el => el.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById('panel-invest').classList.toggle('hidden', tab !== 'paper');
-                document.getElementById('panel-debt').classList.toggle('hidden', tab !== 'debt');
-                this.renderSheet(tab);
-            },
-
-            renderSheet(tab) {
-                document.getElementById('sheet-loan').innerText = '$' + this.state.loan.toLocaleString();
-                document.getElementById('sheet-interest').innerText = '$' + (this.state.loan * 0.1).toLocaleString();
-                document.getElementById('sheet-kids').innerText = this.state.childCount;
-                document.getElementById('sheet-kid-cost').innerText = this.childExpense;
-
-                if (tab === 'paper') {
-                    const container = document.getElementById('sheet-content');
-                    container.innerHTML = '';
-                    if (this.state.assets.length === 0) {
-                        container.innerHTML = '<div class="text-white/30 text-center py-24 text-xs">暂无资产</div>';
-                    } else {
-                        this.state.assets.forEach(asset => {
-                            const isStock = asset.type === 'Stock';
-                            const badge = isStock ? 'Stock' : 'Biz/Real';
-                            const valStr = isStock ? `${asset.quantity}股` : `+$${asset.flow}/月`;
-                            const actionBtn = `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 rounded active:bg-red-500/40">卖出</button>`;
-
-                            const div = document.createElement('div');
-                            div.className = 'bg-white/10 p-3 rounded-2xl flex items-center justify-between text-white text-sm border border-white/5 mb-2';
-                            div.innerHTML = `
-                                <div><div class="font-bold">${asset.name} <span class="text-[10px] bg-white/20 px-1 rounded">${badge}</span></div><div class="text-[10px] opacity-60">${valStr}</div></div>
-                                ${actionBtn}
-                            `;
-                            container.appendChild(div);
-                        });
-                    }
-                } else if (tab === 'debt') {
-                    const list = document.getElementById('liabilities-list');
-                    list.innerHTML = '';
-                    
-                    const fixedDiv = document.createElement('div');
-                    fixedDiv.className = 'debt-item text-white opacity-60';
-                    fixedDiv.style.background = 'transparent';
-                    fixedDiv.style.border = 'none';
-                    fixedDiv.innerHTML = `
-                        <div><div class="font-bold">税收 & 其他</div><div class="text-[10px]">-$${this.state.basicTax + this.state.otherExpense}/月 (固定)</div></div>
-                    `;
-                    list.appendChild(fixedDiv);
-
-                    if (this.state.liabilities.length === 0) {
-                        list.innerHTML += '<div class="text-white/50 text-center py-4 text-xs">无生活负债 🎉</div>';
-                    } else {
-                        this.state.liabilities.forEach(item => {
-                            const div = document.createElement('div');
-                            div.className = 'debt-item text-white';
-                            div.innerHTML = `
-                                <div><div class="font-bold">${item.name}</div><div class="text-[10px] opacity-60">-$${item.expense}/月</div></div>
-                                <button onclick="game.promptPayLiability('${item.id}')" class="px-2 py-1 bg-green-600 rounded text-xs active:scale-95 transition-transform">付 $${item.balance}</button>
-                            `;
-                            list.appendChild(div);
-                        });
-                    }
-                }
-            },
-
-            openOverlay(id) {
-                const overlay = document.getElementById('modal-overlay');
-                overlay.classList.remove('hidden');
-                overlay.style.display = 'flex';
-                
-                ['card-modal','choice-modal','game-over-modal'].forEach(i => document.getElementById(i).classList.add('hidden'));
-                
-                const target = document.getElementById(id);
-                target.classList.remove('hidden', 'shake-anim'); 
-                target.classList.add('modal-enter');
-            },
-            closeModal() {
-                const overlay = document.getElementById('modal-overlay');
-                overlay.classList.add('opacity-0'); 
-                
-                if (uiTimer) clearTimeout(uiTimer);
-                
-                uiTimer = setTimeout(() => {
-                    overlay.classList.add('hidden'); 
-                    overlay.style.display = 'none';
-                    overlay.classList.remove('opacity-0');
-                    this.state.currentCard = null;
-                    this.processQueue();
-                }, 200);
-            },
-            updateUI() {
-                document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
-                document.getElementById('display-flow').innerText = '$' + this.monthlyFlow.toLocaleString();
-                document.getElementById('display-passive').innerText = '$' + this.state.passive.toLocaleString();
-                
-                const totalExp = this.totalExpense;
-                document.getElementById('display-expense').innerText = '$' + totalExp.toLocaleString();
-                
-                const percent = totalExp > 0 ? Math.min((this.state.passive / totalExp) * 100, 100) : 100;
-                document.getElementById('progress-bar').style.width = percent + '%';
-
-                if (this.monthlyFlow < 0 && this.state.cash < 0) document.getElementById('bankrupt-warn').classList.remove('hidden');
-                else document.getElementById('bankrupt-warn').classList.add('hidden');
-
-                this.renderDiceControls();
-            },
-            
-            renderBoard() {
-                const board = document.getElementById('game-board'); board.innerHTML = '';
-                const tiles = CONFIG.tiles;
-                
-                tiles.forEach((tile, idx) => {
-                    const div = document.createElement('div');
-                    div.className = `tile ${tile.color}`;
-                    div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
-                    if (idx === this.state.pos) {
-                        div.classList.add('active');
-                        div.innerHTML += `<div class="player-token"></div>`;
-                        setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
-                    }
-                    board.appendChild(div);
-                });
-            },
-            log(msg, important = false) {
-                const el = document.getElementById('log-capsule');
-                el.innerHTML = msg;
-                if (important) {
-                    el.classList.add('scale-105', 'bg-white', 'dark:bg-white', 'text-slate-800', 'shadow-md');
-                } else {
-                    el.classList.remove('scale-105', 'bg-white', 'dark:bg-white', 'text-slate-800', 'shadow-md');
-                }
-                setTimeout(() => el.classList.remove('scale-105', 'bg-white', 'dark:bg-white', 'text-slate-800', 'shadow-md'), 800);
-            },
-            animChange(id, type) {
-                const el = document.getElementById(id);
-                const color = type === 'positive' ? 'text-green-600' : 'text-red-500';
-                el.classList.add(color, 'scale-110', 'transition-transform');
-                setTimeout(() => el.classList.remove(color, 'scale-110'), 300);
             }
-        };
+        },
 
-        window.game = game;
+        winGame(type) {
+            this.state.isGameOver = true; 
+            this.isMoving = false; 
+            
+            setTimeout(() => {
+                if (uiTimer) clearTimeout(uiTimer);
+                this.state.eventQueue = [];
+                
+                let title = '', desc = '';
+                if (type === 'DREAM') {
+                    title = '梦想成真！';
+                    desc = `恭喜！你买下了 <b class="text-pink-500">${this.state.userDream.name}</b>。<br>你赢得了整场游戏！`;
+                } else {
+                    title = '金钱帝国！';
+                    desc = `恭喜！你在快车道建立了 <b class="text-green-500">+$${this.state.ftAddedCashflow.toLocaleString()}/月</b> 的额外现金流。<br>你是真正的资本大鳄！`;
+                }
 
-        const setVh = () => {
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-        window.addEventListener('resize', setVh);
-        setVh();
+                document.getElementById('end-icon').innerText = '🏆';
+                document.getElementById('end-title').innerText = title;
+                document.getElementById('end-desc').innerHTML = desc;
+                
+                const sheet = document.getElementById('sheet-modal');
+                sheet.classList.add('hidden');
+                sheet.style.display = 'none';
 
-        game.init();
-    </script>
+                this.openOverlay('game-over-modal');
+                document.getElementById('dice-controls').innerHTML = '';
+                
+                const btn = document.querySelector('#game-over-modal button');
+                btn.innerText = "重新开始";
+                btn.onclick = () => location.reload();
+            }, 50);
+        },
+
+        toggleSheet() {
+            const sheet = document.getElementById('sheet-modal');
+            if (sheet.classList.contains('hidden')) {
+                this.renderSheet(this.state.currentTab);
+                sheet.style.display = 'flex'; sheet.classList.remove('hidden');
+            } else {
+                sheet.style.display = 'none'; sheet.classList.add('hidden');
+            }
+        },
+
+        switchTab(tab, btn) {
+            this.state.currentTab = tab;
+            document.querySelectorAll('.segment-btn').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('panel-invest').classList.toggle('hidden', tab !== 'paper');
+            document.getElementById('panel-debt').classList.toggle('hidden', tab !== 'debt');
+            this.renderSheet(tab);
+        },
+
+        renderSheet(tab) {
+            document.getElementById('sheet-loan').innerText = '$' + this.state.loan.toLocaleString();
+            document.getElementById('sheet-interest').innerText = '$' + (this.state.loan * 0.1).toLocaleString();
+            document.getElementById('sheet-kids').innerText = this.state.childCount;
+            document.getElementById('sheet-kid-cost').innerText = this.childExpense.toLocaleString();
+
+            if (tab === 'paper') {
+                const container = document.getElementById('sheet-content');
+                container.innerHTML = '';
+                if (this.state.assets.length === 0) {
+                    container.innerHTML = '<div class="text-white/30 text-center py-24 text-xs">暂无资产</div>';
+                } else {
+                    this.state.assets.forEach(asset => {
+                        const isStock = asset.type === 'Stock';
+                        const badge = isStock ? 'Stock' : 'Biz/Real';
+                        const valStr = isStock ? `${asset.quantity}股` : `+$${asset.flow.toLocaleString()}/月`;
+                        const actionBtn = this.state.isFastTrack ? '' : `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 rounded active:bg-red-500/40">卖出</button>`;
+
+                        const div = document.createElement('div');
+                        div.className = 'bg-white/10 p-3 rounded-2xl flex items-center justify-between text-white text-sm border border-white/5 mb-2';
+                        div.innerHTML = `
+                            <div><div class="font-bold">${asset.name} <span class="text-[10px] bg-white/20 px-1 rounded">${badge}</span></div><div class="text-[10px] opacity-60">${valStr}</div></div>
+                            ${actionBtn}
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            } else if (tab === 'debt') {
+                const list = document.getElementById('liabilities-list');
+                list.innerHTML = '';
+                
+                const fixedDiv = document.createElement('div');
+                fixedDiv.className = 'debt-item text-white opacity-60';
+                fixedDiv.style.background = 'transparent';
+                fixedDiv.style.border = 'none';
+                fixedDiv.innerHTML = `
+                    <div><div class="font-bold">税收 & 其他</div><div class="text-[10px]">-$${(this.state.basicTax + this.state.otherExpense).toLocaleString()}/月 (固定)</div></div>
+                `;
+                list.appendChild(fixedDiv);
+
+                if (this.state.liabilities.length === 0) {
+                    list.innerHTML += '<div class="text-white/50 text-center py-4 text-xs">无生活负债 🎉</div>';
+                } else {
+                    this.state.liabilities.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'debt-item text-white';
+                        div.innerHTML = `
+                            <div><div class="font-bold">${item.name}</div><div class="text-[10px] opacity-60">-$${item.expense}/月</div></div>
+                            <button onclick="game.promptPayLiability('${item.id}')" class="px-2 py-1 bg-green-600 rounded text-xs active:scale-95 transition-transform">付 $${item.balance.toLocaleString()}</button>
+                        `;
+                        list.appendChild(div);
+                    });
+                }
+            }
+        },
+
+        openOverlay(id) {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('hidden');
+            overlay.style.display = 'flex';
+            
+            ['card-modal','choice-modal','game-over-modal','dream-modal'].forEach(i => document.getElementById(i).classList.add('hidden'));
+            
+            const target = document.getElementById(id);
+            target.classList.remove('hidden', 'shake-anim'); 
+            target.classList.add('modal-enter');
+        },
+        closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.add('opacity-0'); 
+            
+            if (uiTimer) clearTimeout(uiTimer);
+            
+            uiTimer = setTimeout(() => {
+                overlay.classList.add('hidden'); 
+                overlay.style.display = 'none';
+                overlay.classList.remove('opacity-0');
+                this.state.currentCard = null;
+                this.processQueue();
+            }, 200);
+        },
+        updateUI() {
+            document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
+            document.getElementById('display-flow').innerText = '$' + this.monthlyFlow.toLocaleString();
+            // 在快车道模式下，被动收入显示为新增的快车道现金流
+            const displayPassive = this.state.isFastTrack ? this.state.ftAddedCashflow : this.state.passive;
+            document.getElementById('display-passive').innerText = '$' + displayPassive.toLocaleString();
+            
+            const totalExp = this.totalExpense;
+            document.getElementById('display-expense').innerText = '$' + totalExp.toLocaleString();
+            
+            let percent = 0;
+            if (this.state.isFastTrack) {
+                // 快车道进度条：目标是 +50000 现金流
+                percent = Math.min((this.state.ftAddedCashflow / 50000) * 100, 100);
+            } else {
+                percent = totalExp > 0 ? Math.min((this.state.passive / totalExp) * 100, 100) : 100;
+            }
+            document.getElementById('progress-bar').style.width = percent + '%';
+
+            if (!this.state.isFastTrack && this.monthlyFlow < 0 && this.state.cash < 0) document.getElementById('bankrupt-warn').classList.remove('hidden');
+            else document.getElementById('bankrupt-warn').classList.add('hidden');
+
+            this.renderDiceControls();
+        },
+        
+        renderBoard() {
+            const board = document.getElementById('game-board'); 
+            board.innerHTML = '';
+            
+            const tiles = this.state.isFastTrack ? CONFIG.fastTrackTiles : CONFIG.tiles;
+            
+            if (this.state.isFastTrack) {
+                // 快车道调整网格样式以容纳48格
+                board.style.gridTemplateColumns = "repeat(4, 1fr)";
+                // 这里不做太复杂的CSS注入，利用 Tailwind 的 flex-wrap 特性或者 grid
+            } else {
+                board.style.gridTemplateColumns = "repeat(4, 1fr)";
+            }
+            
+            tiles.forEach((tile, idx) => {
+                const div = document.createElement('div');
+                let extraClass = '';
+                if (this.state.isFastTrack) {
+                    extraClass = 'text-[9px] h-14'; // 格子变小一点
+                }
+
+                div.className = `tile ${tile.color} ${extraClass}`;
+                
+                // 如果是快车道梦想格，且是玩家选中的，高亮
+                if (this.state.isFastTrack && tile.type === 'FT_Dream') {
+                    div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
+                } else {
+                    div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
+                }
+                
+                if (idx === this.state.pos) {
+                    div.classList.add('active');
+                    div.innerHTML += `<div class="player-token"></div>`;
+                    setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
+                }
+                board.appendChild(div);
+            });
+        },
+        log(msg, important = false) {
+            const el = document.getElementById('log-capsule');
+            el.innerHTML = msg;
+            if (important) {
+                el.classList.add('scale-105', 'bg-white', 'dark:bg-white', 'text-slate-800', 'shadow-md');
+            } else {
+                el.classList.remove('scale-105', 'bg-white', 'dark:bg-white', 'text-slate-800', 'shadow-md');
+            }
+            setTimeout(() => el.classList.remove('scale-105', 'bg-white', 'dark:bg-white', 'text-slate-800', 'shadow-md'), 800);
+        },
+        animChange(id, type) {
+            const el = document.getElementById(id);
+            const color = type === 'positive' ? 'text-green-600' : 'text-red-500';
+            el.classList.add(color, 'scale-110', 'transition-transform');
+            setTimeout(() => el.classList.remove(color, 'scale-110'), 300);
+        }
+    };
+
+    window.game = game;
+
+    const setVh = () => {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    window.addEventListener('resize', setVh);
+    setVh();
+
+    game.init();    </script>
 </body>
 </html>
