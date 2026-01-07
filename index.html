@@ -336,10 +336,10 @@
             <button onclick="game.closeModal()" class="w-full mt-6 py-2 mb-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
         </div>
 
-        <div id="dream-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-6 shadow-2xl hidden flex-col pb-safe-bottom hardware-accel max-h-[80vh]">
+        <div id="dream-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-6 shadow-2xl hidden flex-col pb-safe-bottom hardware-accel h-[80vh]">
             <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 text-center">选择你的梦想</h3>
-    <p class="text-xs text-slate-400 text-center mb-4">这是你进入快车道后的终极目标。</p>
-    <div id="dream-list" class="overflow-y-auto space-y-3 flex-1 px-1">
+            <p class="text-xs text-slate-400 text-center mb-4">这是你进入快车道后的终极目标。</p>
+            <div id="dream-list" class="overflow-y-auto space-y-3 flex-1 px-1 min-h-0">
             </div>
         </div>
 
@@ -1042,35 +1042,49 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     });
                     break;
                 case 'FT_Dream':
-                    // 逻辑：如果是我的梦想 -> 赢。如果是别人的 -> 只是好玩。
-                    // 30% 几率刷出玩家自己的梦想，或者如果正好落在粉色格且未买
+                    // 逻辑修改：只有是自己的梦想才能购买
+                    // 30% 几率刷出玩家自己的梦想
                     const isMyDream = (Math.random() > 0.7); 
-                    const dream = isMyDream ? this.state.userDream : CONFIG.dreams[Math.floor(Math.random() * CONFIG.dreams.length)];
+                    // 如果随机到了自己的梦想，或者是该格子的固定配置（如有），则显示购买
+                    // 这里简化逻辑：如果是随机到的，或者是为了游戏性强制命中的
                     
-                    this.queueEvent({
-                        type: 'INFO_DECISION',
-                        data: {
-                            name: `梦想: ${dream.name}`,
-                            desc: (isMyDream || dream.id === this.state.userDream.id)
-                                ? `💖 <b>这是你梦寐以求的！</b><br>支付 $${dream.cost.toLocaleString()} 购买并<b>赢得游戏</b>！` 
-                                : `这是别人的梦想，但你也可以买下来作为一种成就。<br>成本: $${dream.cost.toLocaleString()}`,
-                            icon: dream.icon,
-                            cost: dream.cost,
-                            onConfirm: () => {
-                                if (this.state.cash >= dream.cost) {
-                                    this.state.cash -= dream.cost;
-                                    if (dream.id === this.state.userDream.id) {
+                    const targetDream = isMyDream ? this.state.userDream : CONFIG.dreams[Math.floor(Math.random() * CONFIG.dreams.length)];
+                    const isTargetMyDream = targetDream.id === this.state.userDream.id;
+
+                    if (isTargetMyDream) {
+                        this.queueEvent({
+                            type: 'INFO_DECISION',
+                            data: {
+                                name: `你的梦想: ${targetDream.name}`,
+                                desc: `💖 <b>这是你梦寐以求的！</b><br>支付 $${targetDream.cost.toLocaleString()} 购买并<b>赢得游戏</b>！`,
+                                icon: targetDream.icon,
+                                cost: targetDream.cost,
+                                onConfirm: () => {
+                                    if (this.state.cash >= targetDream.cost) {
+                                        this.state.cash -= targetDream.cost;
                                         this.winGame('DREAM');
                                     } else {
-                                        this.log(`😎 你购买了 ${dream.name}，虽然这不是你的终极目标。`);
-                                        this.updateUI();
+                                        this.log('现金不足', true);
                                     }
-                                } else {
-                                    this.log('现金不足', true);
                                 }
                             }
-                        }
-                    });
+                        });
+                    } else {
+                        // 如果是别人的梦想，仅展示信息，cost 为 0，按钮不执行购买
+                        this.queueEvent({
+                            type: 'INFO_DECISION',
+                            data: {
+                                name: `别人的梦想: ${targetDream.name}`,
+                                desc: `这是别人的梦想，你看看就好。<br>成本: $${targetDream.cost.toLocaleString()}<br><span class="text-xs text-slate-400">(你只能购买自己选定的梦想)</span>`,
+                                icon: targetDream.icon,
+                                cost: 0, 
+                                onConfirm: () => {
+                                    this.log(`👀 参观了 ${targetDream.name}`);
+                                    this.updateUI();
+                                }
+                            }
+                        });
+                    }
                     this.processQueue();
                     break;
                 case 'FT_Charity':
@@ -1687,19 +1701,15 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             
             const tiles = this.state.isFastTrack ? CONFIG.fastTrackTiles : CONFIG.tiles;
             
-            if (this.state.isFastTrack) {
-                // 快车道调整网格样式以容纳48格
-                board.style.gridTemplateColumns = "repeat(4, 1fr)";
-                // 这里不做太复杂的CSS注入，利用 Tailwind 的 flex-wrap 特性或者 grid
-            } else {
-                board.style.gridTemplateColumns = "repeat(4, 1fr)";
-            }
+            // 保持4列布局
+            board.style.gridTemplateColumns = "repeat(4, 1fr)";
             
             tiles.forEach((tile, idx) => {
                 const div = document.createElement('div');
                 let extraClass = '';
                 if (this.state.isFastTrack) {
-                    extraClass = 'text-[9px] h-14'; // 格子变小一点
+                    // 修改：移除了 'h-14'，只保留字体缩小，让 CSS 的 aspect-ratio 控制正方形
+                    extraClass = 'text-[9px]'; 
                 }
 
                 div.className = `tile ${tile.color} ${extraClass}`;
