@@ -91,6 +91,12 @@
             -webkit-backdrop-filter: blur(var(--ios-blur)); 
             border: 1px solid rgba(255, 255, 255, 0.4); 
         }
+
+        .ios-scroll {
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important; /* 关键：开启 iOS 惯性滚动 */
+            overscroll-behavior: contain; /* 防止滚动传导给 body */
+        }
         
         @media (prefers-color-scheme: dark) {
             .glass { border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -336,12 +342,13 @@
             <button onclick="game.closeModal()" class="w-full mt-6 py-2 mb-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
         </div>
 
-        <div id="dream-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-6 shadow-2xl hidden flex-col pb-safe-bottom hardware-accel h-[80vh]">
-            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 text-center">选择你的梦想</h3>
-            <p class="text-xs text-slate-400 text-center mb-4">这是你进入快车道后的终极目标。</p>
-            <div id="dream-list" class="overflow-y-auto space-y-3 flex-1 px-1 min-h-0 overscroll-contain pb-4 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
-            </div>
+        <div id="dream-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-6 shadow-2xl hidden flex-col pb-safe-bottom hardware-accel h-[80dvh]">
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 text-center flex-shrink-0">选择你的梦想</h3>
+            <p class="text-xs text-slate-400 text-center mb-4 flex-shrink-0">这是你进入快车道后的终极目标。</p>
+    
+            <div id="dream-list" class="ios-scroll flex-1 px-1 min-h-0 space-y-3 pb-10">
         </div>
+    </div>
 
         <div id="game-over-modal" class="glass w-[90%] sm:w-[360px] rounded-[32px] p-8 shadow-2xl hidden flex-col items-center text-center dark:border dark:border-white/10 hardware-accel pb-safe-bottom">
             <div class="text-6xl mb-4" id="end-icon">☠️</div>
