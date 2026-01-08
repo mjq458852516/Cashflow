@@ -35,6 +35,28 @@
             --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
         }
 
+        /* --- iPhone 滚动重构核心样式 --- */
+        .ios-scroll-container {
+        /* 强制开启 GPU 加速，解决卡顿 */
+        transform: translate3d(0,0,0);
+        /* 明确告诉浏览器这个区域只允许垂直拖动 */
+        touch-action: pan-y;
+        /* 核心：开启 iOS 惯性滚动 */
+        -webkit-overflow-scrolling: touch;
+        /* 滚动条逻辑 */
+        overflow-y: auto;
+        overflow-x: hidden;
+        /* 阻止滚动链传递给 body */
+        overscroll-behavior: contain;
+        /* 确保内容能被点击 */
+        pointer-events: auto;
+        }
+
+        /* 隐藏滚动条但保留功能 (可选，为了美观) */
+        .ios-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+        
         /* --- iPhone 适配核心修复开始 --- */
         /* 手动定义安全区域，修复刘海和底部Home条遮挡 */
         .pt-safe-top {
@@ -342,14 +364,22 @@
             <button onclick="game.closeModal()" class="w-full mt-6 py-2 mb-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
         </div>
 
-        <div id="dream-modal" class="glass w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] p-6 shadow-2xl hidden flex-col pb-safe-bottom hardware-accel h-[80dvh]">
-            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 text-center flex-shrink-0">选择你的梦想</h3>
-            <p class="text-xs text-slate-400 text-center mb-4 flex-shrink-0">这是你进入快车道后的终极目标。</p>
+        <div id="dream-modal" class="glass fixed left-0 right-0 bottom-0 mx-auto w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] shadow-2xl hidden flex flex-col pb-safe-bottom z-50 h-[75dvh] transition-transform duration-300">
     
-            <div id="dream-list" class="ios-scroll flex-1 px-1 min-h-0 space-y-3 pb-10">
-        </div>
-    </div>
+            <div class="flex-shrink-0 px-6 pt-6 pb-2 z-10 bg-inherit rounded-t-[32px] relative border-b border-black/5 dark:border-white/5">
+                <div class="w-12 h-1.5 bg-slate-200 dark:bg-white/20 rounded-full mx-auto mb-3"></div>
+                <h3 class="text-xl font-bold text-slate-800 dark:text-white text-center">选择你的梦想</h3>
+                <p class="text-xs text-slate-400 text-center mt-1">这是你进入快车道后的终极目标。</p>
+                </div>
 
+                <div class="relative flex-1 min-h-0 w-full">
+                    <div id="dream-list" class="ios-scroll-container absolute inset-0 px-6 py-4 space-y-3 pb-20">
+                        </div>
+        
+                     <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white/90 dark:from-[#1c1c1e] to-transparent pointer-events-none rounded-b-[32px]"></div>
+                </div>
+        </div>
+        
         <div id="game-over-modal" class="glass w-[90%] sm:w-[360px] rounded-[32px] p-8 shadow-2xl hidden flex-col items-center text-center dark:border dark:border-white/10 hardware-accel pb-safe-bottom">
             <div class="text-6xl mb-4" id="end-icon">☠️</div>
             <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2" id="end-title">游戏结束</h2>
@@ -663,19 +693,26 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             list.innerHTML = '';
             CONFIG.dreams.forEach(dream => {
                 const btn = document.createElement('button');
-                btn.className = "w-full p-3 mb-2 rounded-2xl border bg-white/50 dark:bg-[#2c2c2e]/50 border-slate-100 dark:border-white/5 hover:border-pink-400 active:bg-pink-50 dark:active:bg-pink-900/20 tap-effect flex items-center gap-3 transition-all text-left group";
-                btn.onclick = () => this.startGame(dream);
+                btn.className = "block w-full p-4 mb-3 rounded-2xl border bg-white/60 dark:bg-[#2c2c2e]/60 border-slate-100 dark:border-white/5 active:bg-pink-50 dark:active:bg-pink-900/20 active:scale-[0.98] transition-all text-left group shadow-sm relative overflow-hidden";
+                btn.onclick = (e) => {
+                     // 阻止事件冒泡，防止触发底下的元素
+                     e.stopPropagation(); 
+                     this.startGame(dream);
+                };
+                
                 btn.innerHTML = `
-                    <div class="text-3xl group-active:scale-110 transition-transform">${dream.icon}</div>
-                    <div class="flex-1">
-                        <div class="font-bold text-slate-800 dark:text-white flex justify-between">
-                            <span>${dream.name}</span>
-                            <span class="text-pink-500">$${dream.cost.toLocaleString()}</span>
+                    <div class="flex items-center gap-4 relative z-10">
+                        <div class="text-3xl bg-white dark:bg-white/10 w-12 h-12 rounded-full flex items-center justify-center shadow-sm text-shadow">${dream.icon}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-slate-800 dark:text-white text-[15px] flex justify-between items-center">
+                            <span class="truncate pr-2">${dream.name}</span>
+                            <span class="text-pink-600 dark:text-pink-400 font-mono text-sm bg-pink-50 dark:bg-pink-900/30 px-2 py-0.5 rounded-lg">$${dream.cost/1000}k</span>
                         </div>
-                        <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">${dream.desc}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-1 line-clamp-2">${dream.desc}</div>
                     </div>
-                `;
-                list.appendChild(btn);
+                   </div>
+               `;
+               list.appendChild(btn);
             });
         },
 
