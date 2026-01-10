@@ -853,7 +853,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 const btn2 = document.createElement('button');
                 btn2.onclick = () => game.rollDice(2);
                 btn2.className = `tap-effect flex-1 bg-pink-600 dark:bg-pink-500 dark:text-white text-white rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 ${this.isMoving ? 'opacity-50 pointer-events-none' : ''}`;
-                btn2.innerHTML = '🎲🎲 双骰（默认）';
+                btn2.innerHTML = '🎲🎲 双骰';
                 container.appendChild(btn2);
 
                 // 慈善三骰按钮（只在有次数时显示）
