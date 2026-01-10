@@ -1644,6 +1644,15 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
          }
      },
 
+             this.openOverlay('game-over-modal');
+             document.getElementById('dice-controls').innerHTML = '';
+
+             const btn = document.querySelector('#game-over-modal button');
+             btn.innerText = "重新开始";
+             btn.onclick = () => location.reload();
+         }
+     },
+
         winGame(type) {
             this.state.isGameOver = true; 
             this.isMoving = false; 
@@ -1817,11 +1826,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }
             document.getElementById('progress-bar').style.width = percent + '%';
 
-            if (!this.state.isFastTrack && this.monthlyFlow < 0 && this.state.cash < 0) document.getElementById('bankrupt-warn').classList.remove('hidden');
-            else document.getElementById('bankrupt-warn').classList.add('hidden');
-
-            this.renderDiceControls();
-        },
         
         renderBoard() {
             const board = document.getElementById('game-board'); 
@@ -1843,23 +1847,23 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 div.className = `tile ${tile.color} ${extraClass}`;
                 
 
-                // 正常显示所有格子
-                div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
+             // 默认显示所有格子
+             div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
 
-                // 快车道特殊显示（覆盖正常显示）
-                if (this.state.isFastTrack) {
-                    if (tile.type === 'FT_Dream') {
-                        div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
-                    }
-                    if (tile.type === 'FT_Biz' && this.state.fastTrackBiz[idx]) {
-                        const biz = this.state.fastTrackBiz[idx];
-                        div.innerHTML = `
-                            <div class="tile-icon text-lg">${biz.icon}</div>
-                            <div class="text-[8px] font-bold opacity-90 scale-90 tracking-tight leading-none">${biz.name}</div>
-                            <div class="text-[7px] opacity-70">已拥有</div>
-                        `;
-                    }
-                }
+             // 快车道特殊显示（会覆盖默认）
+             if (this.state.isFastTrack) {
+                 if (tile.type === 'FT_Dream') {
+                     div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
+                 }
+                 if (tile.type === 'FT_Biz' && this.state.fastTrackBiz[idx]) {
+                     const biz = this.state.fastTrackBiz[idx];
+                     div.innerHTML = `
+                         <div class="tile-icon text-lg">${biz.icon}</div>
+                         <div class="text-[8px] font-bold opacity-90 scale-90 tracking-tight leading-none">${biz.name}</div>
+                         <div class="text-[7px] opacity-70">已拥有</div>
+                     `;
+                 }
+             }
 
                 
                 if (idx === this.state.pos) {
