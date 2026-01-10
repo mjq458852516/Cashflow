@@ -1842,12 +1842,16 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
                 div.className = `tile ${tile.color} ${extraClass}`;
                 
-                // 如果是快车道梦想格，且是玩家选中的，高亮
-                if (this.state.isFastTrack && tile.type === 'FT_Dream') {
-                    div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
 
-                if (this.state.isFastTrack && tile.type === 'FT_Biz') {
-                    if (this.state.fastTrackBiz[idx]) {
+                // 正常显示所有格子
+                div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
+
+                // 快车道特殊显示（覆盖正常显示）
+                if (this.state.isFastTrack) {
+                    if (tile.type === 'FT_Dream') {
+                        div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
+                    }
+                    if (tile.type === 'FT_Biz' && this.state.fastTrackBiz[idx]) {
                         const biz = this.state.fastTrackBiz[idx];
                         div.innerHTML = `
                             <div class="tile-icon text-lg">${biz.icon}</div>
@@ -1857,9 +1861,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     }
                 }
 
-                } else {
-                    div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
-                }
                 
                 if (idx === this.state.pos) {
                     div.classList.add('active');
