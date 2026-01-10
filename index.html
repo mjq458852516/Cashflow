@@ -672,6 +672,9 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             downsizedTurns: 0, 
             charityTurns: 0, 
             eventQueue: [],
+            fastTrackCharityTurns: 0, 
+            fastTrackBiz: {}, // 保存每个格子已投资的项目
+
             
             jobTitle: '',
             jobIcon: '',
@@ -842,12 +845,29 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             const disabledClass = this.isMoving ? "opacity-50 pointer-events-none" : "";
             const commonClass = `tap-effect flex-1 bg-[#1C1C1E] dark:bg-white dark:text-black text-white rounded-2xl font-bold text-lg shadow-xl shadow-slate-300 dark:shadow-none flex items-center justify-center gap-2 active:bg-black transition-all ${disabledClass}`;
 
-            // 快车道可以随意选1或2个骰子
+            // 快车道默认2个骰子
             if (this.state.isFastTrack) {
-                container.innerHTML = `
-                    <button onclick="game.rollDice(1)" class="${commonClass} bg-slate-600 dark:bg-slate-200">🎲 1</button>
-                    <button onclick="game.rollDice(2)" class="${commonClass} flex-[1.5] bg-pink-600 dark:bg-pink-500 dark:text-white">🎲🎲 双骰飙车</button>
-                `;
+                container.innerHTML = '';
+
+                // 默认双骰按钮
+                const btn2 = document.createElement('button');
+                btn2.onclick = () => game.rollDice(2);
+                btn2.className = `tap-effect flex-1 bg-pink-600 dark:bg-pink-500 dark:text-white text-white rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 ${this.isMoving ? 'opacity-50 pointer-events-none' : ''}`;
+                btn2.innerHTML = '🎲🎲 双骰（默认）';
+                container.appendChild(btn2);
+
+                // 慈善三骰按钮（只在有次数时显示）
+                if (this.state.fastTrackCharityTurns > 0) {
+                    const btn3 = document.createElement('button');
+                    btn3.onclick = () => {
+                        game.rollDice(3);
+                        game.state.fastTrackCharityTurns--;
+                        game.updateUI();
+                    };
+                    btn3.className = `tap-effect flex-1 bg-orange-600 text-white rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 ${this.isMoving ? 'opacity-50 pointer-events-none' : ''}`;
+                    btn3.innerHTML = `🎲🎲🎲 三骰（剩余${this.state.fastTrackCharityTurns}次）`;
+                    container.appendChild(btn3);
+                }
                 return;
             }
 
@@ -1069,9 +1089,17 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 case 'FT_Pay':
                     this.payDay();
                     break;
+
                 case 'FT_Biz':
+                    // 如果这个格子已经投资过了，只提示
+                    if (this.state.fastTrackBiz[this.state.pos]) {
+                        const deal = this.state.fastTrackBiz[this.state.pos];
+                        this.log(`🏢 已拥有：${deal.name} (+$${deal.flow.toLocaleString()}/月)`);
+                        break;
+                    }
+
+                    // 没投资过，抽一张新机会
                     const deal = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
-                    // 随机浮动一点数值
                     const flow = deal.flow + (Math.floor(Math.random()*5)*1000);
                     const cost = deal.cost + (Math.floor(Math.random()*5)*10000);
                     
@@ -1084,6 +1112,8 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         desc: deal.desc,
                         icon: deal.icon
                     });
+                    // 临时记住这个格子位置，等购买成功后再正式保存
+                    this.state.currentCard.tempPos = this.state.pos;
                     break;
                 case 'FT_Dream':
                     // 逻辑修改：只有是自己的梦想才能购买
@@ -1114,22 +1144,16 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                             }
                         });
                     } else {
-                        // 如果是别人的梦想，仅展示信息，cost 为 0，按钮不执行购买
+                        // 别人的梦想：只显示信息，没有确认购买按钮
                         this.queueEvent({
-                            type: 'INFO_DECISION',
+                            type: 'INFO_ONLY',
                             data: {
                                 name: `别人的梦想: ${targetDream.name}`,
-                                desc: `这是别人的梦想，你看看就好。<br>成本: $${targetDream.cost.toLocaleString()}<br><span class="text-xs text-slate-400">(你只能购买自己选定的梦想)</span>`,
-                                icon: targetDream.icon,
-                                cost: 0, 
-                                onConfirm: () => {
-                                    this.log(`👀 参观了 ${targetDream.name}`);
-                                    this.updateUI();
-                                }
+                                desc: `这是别人的梦想，你只能看看。<br>成本: $${targetDream.cost.toLocaleString()}<br><span class="text-xs text-slate-400">(你只能购买自己选定的梦想)</span>`,
+                                icon: targetDream.icon
                             }
                         });
-                    }
-                    this.processQueue();
+                    }                    this.processQueue();
                     break;
                 case 'FT_Charity':
                     this.triggerCharity();
@@ -1157,13 +1181,17 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 type: 'INFO_DECISION',
                 data: {
                     name: '慈善捐赠',
-                    desc: `捐赠总收入的 10% ($${cost.toLocaleString()})？<br>好处：接下来3个回合可选用2颗骰子。`,
+                    desc: `捐赠总收入的 10% ($${cost.toLocaleString()})？<br>好处：接下来3个回合可使用三颗骰子。`,
                     icon: '💜',
                     cost: cost,
                     onConfirm: () => {
                         if(this.state.cash >= cost) {
                             this.state.cash -= cost;
-                            this.state.charityTurns = 3;
+                            if (this.state.isFastTrack) {
+                                this.state.fastTrackCharityTurns = 3;
+                            } else {
+                                this.state.charityTurns = 3;
+                            }
                             this.log(`💜 捐赠成功，特权生效！`, true);
                             this.updateUI();
                         } else {
@@ -1424,6 +1452,14 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             btnShort.classList.add('hidden');
             btnAction.classList.remove('hidden');
             btnCancel.classList.remove('hidden'); 
+
+            // 如果是只显示信息（别人的梦想），隐藏确认按钮
+            if (type === 'INFO_ONLY') {
+                btnAction.classList.add('hidden');
+                btnCancel.innerText = '关闭';
+            } else {
+                btnAction.classList.remove('hidden');
+            }
             
             btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
 
@@ -1526,6 +1562,18 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         } else {
                             this.log(`🏠 购入资产: +$${card.flow.toLocaleString()}/月`);
                         }
+
+                    // 快车道投资成功后，把项目保存到对应格子
+                    if (this.state.isFastTrack && this.state.currentCard && this.state.currentCard.tempPos !== undefined) {
+                        this.state.fastTrackBiz[this.state.currentCard.tempPos] = {
+                            name: card.name,
+                            icon: card.icon,
+                            flow: card.flow
+                        };
+                        delete this.state.currentCard.tempPos;
+                        this.renderBoard(); // 刷新棋盘显示
+                    }
+
                     } else { this.shakeModal(); return; }
                 }
             }
@@ -1761,6 +1809,18 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 // 如果是快车道梦想格，且是玩家选中的，高亮
                 if (this.state.isFastTrack && tile.type === 'FT_Dream') {
                     div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
+
+                if (this.state.isFastTrack && tile.type === 'FT_Biz') {
+                    if (this.state.fastTrackBiz[idx]) {
+                        const biz = this.state.fastTrackBiz[idx];
+                        div.innerHTML = `
+                            <div class="tile-icon text-lg">${biz.icon}</div>
+                            <div class="text-[8px] font-bold opacity-90 scale-90 tracking-tight leading-none">${biz.name}</div>
+                            <div class="text-[7px] opacity-70">已拥有</div>
+                        `;
+                    }
+                }
+
                 } else {
                     div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
                 }
