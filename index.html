@@ -637,17 +637,23 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { type: 'Buyer', target: '金币收藏', price: 1000, desc: '金价暴涨！收藏家急寻克鲁格金币，出价 $1,000。' },
             { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！你的原始股价值飙升至 $250,000！' }
         ],
+
         doodads: [
-            { name: '购买新家具', cost: 7000, icon: '🪑' },
-            { name: '车坏了', cost: 500, icon: '🔧' },
-            { name: '购买大屏电视', cost: 1000, icon: '📺' },
-            { name: '请朋友吃饭', cost: 100, icon: '🍽️' },
-            { name: '购买名牌服装', cost: 400, icon: '👗' },
-            { name: '高尔夫会员', cost: 1500, icon: '⛳️' },
-            { name: '每天喝拿铁', cost: 150, icon: '☕️' },
-            { name: '家庭度假', cost: 2000, icon: '🏖️' }
-        ]
-    };
+            { name: '周末度假', cost: 2000, icon: '🏖️' },
+            { name: '购物狂欢', cost: 3000, icon: '🛍️' },
+            { name: '购买大屏电视', cost: 3500, icon: '📺' },
+            { name: '新音响系统', cost: 1200, icon: '🔊' },
+            { name: '新高尔夫球具', cost: 1500, icon: '⛳️' },
+            { name: '珠宝首饰', cost: 5000, icon: '💎' },
+            { name: '豪华晚餐', cost: 400, icon: '🍽️' },
+            { name: '新衣服套装', cost: 800, icon: '👔' },
+            { name: '船只维修', cost: 6000, icon: '🛥️' },
+            { name: '家庭娱乐系统', cost: 2500, icon: '🎮' },
+            { name: '购买新家具', cost: 4000, icon: '🛋️' },
+            { name: '汽车大修', cost: 1500, icon: '🔧' },
+            { name: '奢侈手表', cost: 8000, icon: '⌚' },
+            { name: '游艇保养', cost: 12000, icon: '⚓' }
+        ],
 
     let uiTimer = null; 
 
@@ -1019,25 +1025,13 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
         checkBankruptcy() {
             if (this.state.isGameOver) return;
-            const liquidAssets = this.state.assets.filter(a => a.type === 'RealEstate' || a.type === 'Business' || a.type === 'Stock');
             
-            if (this.state.cash < 0) {
-                const debt = Math.abs(this.state.cash);
-                if (liquidAssets.length === 0 && this.monthlyFlow < 0) {
-                    document.getElementById('end-icon').innerText = '☠️';
-                    document.getElementById('end-title').innerText = "破产清算";
-                    document.getElementById('end-desc').innerText = "现金流断裂，且无资产可抵债。";
-                    this.state.isGameOver = true;
-                    this.openOverlay('game-over-modal');
-                    this.renderDiceControls(); 
-                } else {
-                    this.log(`⚠️ 现金赤字 $${debt}，请变卖资产或借贷`, true);
-                    if (document.getElementById('sheet-modal').classList.contains('hidden')) {
-                        setTimeout(() => {
-                            this.toggleSheet(); 
-                            this.switchTab('paper', document.querySelector('.segment-btn')); 
-                        }, 500);
-                    }
+            if (this.state.cash < 0 || this.monthlyFlow < 0) {
+                this.log(`⚠️ 财务警报：现金或月现金流为负，请借贷或变卖资产`, true);
+                
+                // 自动打开资产负债表，方便操作
+                if (document.getElementById('sheet-modal').classList.contains('hidden')) {
+                    setTimeout(() => this.toggleSheet(), 600);
                 }
             }
         },
@@ -1628,6 +1622,28 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }
         },
 
+     declareBankruptcy() {
+         if (confirm('☠️ 你确定要宣布破产吗？\n\n这将立即结束游戏，你将失去一切进展。')) {
+             this.state.isGameOver = true;
+             this.isMoving = false;
+
+             document.getElementById('end-icon').innerText = '☠️';
+             document.getElementById('end-title').innerText = '破产清算';
+             document.getElementById('end-desc').innerHTML = `
+                 债务已将你压垮。<br><br>
+                 <span class="text-xs opacity-70">记住：坏债务会毁掉一切。<br>
+                 下次优先投资产生被动收入，避免过度消费。</span>
+             `;
+
+             this.openOverlay('game-over-modal');
+             document.getElementById('dice-controls').innerHTML = '';
+
+             const btn = document.querySelector('#game-over-modal button');
+             btn.innerText = "重新开始";
+             btn.onclick = () => location.reload();
+         }
+     },
+
         winGame(type) {
             this.state.isGameOver = true; 
             this.isMoving = false; 
@@ -1733,6 +1749,26 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         `;
                         list.appendChild(div);
                     });
+
+             // 新增：宣布破产按钮（苹果风格红色大按钮）
+             const bankruptcyBtn = document.createElement('div');
+             bankruptcyBtn.className = 'mt-6';
+             bankruptcyBtn.innerHTML = `
+                 <button onclick="game.declareBankruptcy()" 
+                         class="w-full py-4 bg-red-600 dark:bg-red-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-red-900/30 tap-effect active:scale-95 transition-all flex items-center justify-center gap-2">
+                     ☠️ 宣布破产（结束游戏）
+                 </button>
+                 <div class="text-[10px] text-red-300 dark:text-red-400 text-center mt-2 opacity-70">
+                     当你觉得债务无法翻身时，可主动选择破产
+                 </div>
+             `;
+             list.appendChild(bankruptcyBtn);
+
+             // 底部留白（可选，美观用）
+             const empty = document.createElement('div');
+             empty.className = 'h-10';
+             list.appendChild(empty);
+
                 }
             }
         },
