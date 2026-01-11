@@ -452,7 +452,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         // 职业数据
         professions: [
             {
-                name: '门卫', icon: '🧹', salary: 1600, savings: 1600, perChild: 70,
+                name: '保安', icon: '🧹', salary: 1600, savings: 1600, perChild: 70,
                 debts: { mortgage: 20000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
                 expenses: { tax: 280, mortgage: 200, car: 60, credit: 60, retail: 50, loan: 0, other: 300 }
             },
@@ -467,7 +467,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 expenses: { tax: 360, mortgage: 300, car: 60, credit: 60, retail: 50, loan: 0, other: 450 }
             },
             {
-                name: '教师', icon: '📚', salary: 3300, savings: 3300, perChild: 180,
+                name: '教师', icon: '👨‍🏫', salary: 3300, savings: 3300, perChild: 180,
                 debts: { mortgage: 50000, car: 5000, credit: 3000, retail: 1000, loan: 12000 },
                 expenses: { tax: 630, mortgage: 500, car: 100, credit: 90, retail: 50, loan: 60, other: 760 }
             },
@@ -497,7 +497,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 expenses: { tax: 1050, mortgage: 700, car: 140, credit: 150, retail: 50, loan: 60, other: 1090 }
             },
             {
-                name: '医生', icon: '⚕️', salary: 13200, savings: 13200, perChild: 640,
+                name: '医生', icon: '👨‍⚕️', salary: 13200, savings: 13200, perChild: 640,
                 debts: { mortgage: 202000, car: 19000, credit: 9000, retail: 1000, loan: 150000 },
                 expenses: { tax: 3420, mortgage: 1900, car: 380, credit: 270, retail: 50, loan: 750, other: 2880 }
             },
@@ -507,7 +507,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 expenses: { tax: 1830, mortgage: 1100, car: 220, credit: 180, retail: 50, loan: 390, other: 1650 }
             },
             {
-                name: '飞行员', icon: '✈️', salary: 9500, savings: 9500, perChild: 480,
+                name: '飞行员', icon: '🧑‍✈️', salary: 9500, savings: 9500, perChild: 480,
                 debts: { mortgage: 143000, car: 15000, credit: 22000, retail: 1000, loan: 0 },
                 expenses: { tax: 2350, mortgage: 1330, car: 300, credit: 660, retail: 50, loan: 0, other: 2210 }
             }
@@ -861,7 +861,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 const btn2 = document.createElement('button');
                 btn2.onclick = () => game.rollDice(2);
                 btn2.className = `tap-effect flex-1 bg-pink-600 dark:bg-pink-500 dark:text-white text-white rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 ${this.isMoving ? 'opacity-50 pointer-events-none' : ''}`;
-                btn2.innerHTML = '🎲🎲 双骰（默认）';
+                btn2.innerHTML = '🎲🎲 双骰';
                 container.appendChild(btn2);
 
                 // 慈善三骰按钮（只在有次数时显示）
