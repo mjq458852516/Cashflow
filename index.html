@@ -41,6 +41,8 @@
         transform: translate3d(0,0,0);
         /* 明确告诉浏览器这个区域只允许垂直拖动 */
         touch-action: pan-y;
+        /* 核心：开启 iOS 惯性滚动 */
+        -webkit-overflow-scrolling: touch;
         /* 滚动条逻辑 */
         overflow-y: auto;
         overflow-x: hidden;
@@ -114,6 +116,7 @@
 
         .ios-scroll {
             overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important; /* 关键：开启 iOS 惯性滚动 */
             overscroll-behavior: contain; /* 防止滚动传导给 body */
         }
         
@@ -1022,13 +1025,25 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
         checkBankruptcy() {
             if (this.state.isGameOver) return;
+            const liquidAssets = this.state.assets.filter(a => a.type === 'RealEstate' || a.type === 'Business' || a.type === 'Stock');
             
-            if (this.state.cash < 0 || this.monthlyFlow < 0) {
-                this.log(`⚠️ 财务警报：现金或月现金流为负，请借贷或变卖资产`, true);
-                
-                // 自动打开资产负债表，方便操作
-                if (document.getElementById('sheet-modal').classList.contains('hidden')) {
-                    setTimeout(() => this.toggleSheet(), 600);
+            if (this.state.cash < 0) {
+                const debt = Math.abs(this.state.cash);
+                if (liquidAssets.length === 0 && this.monthlyFlow < 0) {
+                    document.getElementById('end-icon').innerText = '☠️';
+                    document.getElementById('end-title').innerText = "破产清算";
+                    document.getElementById('end-desc').innerText = "现金流断裂，且无资产可抵债。";
+                    this.state.isGameOver = true;
+                    this.openOverlay('game-over-modal');
+                    this.renderDiceControls(); 
+                } else {
+                    this.log(`⚠️ 现金赤字 $${debt}，请变卖资产或借贷`, true);
+                    if (document.getElementById('sheet-modal').classList.contains('hidden')) {
+                        setTimeout(() => {
+                            this.toggleSheet(); 
+                            this.switchTab('paper', document.querySelector('.segment-btn')); 
+                        }, 500);
+                    }
                 }
             }
         },
@@ -1619,37 +1634,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }
         },
 
-     declareBankruptcy() {
-         if (confirm('☠️ 你确定要宣布破产吗？\n\n这将立即结束游戏，你将失去一切进展。')) {
-             this.state.isGameOver = true;
-             this.isMoving = false;
-
-             document.getElementById('end-icon').innerText = '☠️';
-             document.getElementById('end-title').innerText = '破产清算';
-             document.getElementById('end-desc').innerHTML = `
-                 债务已将你压垮。<br><br>
-                 <span class="text-xs opacity-70">记住：坏债务会毁掉一切。<br>
-                 下次优先投资产生被动收入，避免过度消费。</span>
-             `;
-
-             this.openOverlay('game-over-modal');
-             document.getElementById('dice-controls').innerHTML = '';
-
-             const btn = document.querySelector('#game-over-modal button');
-             btn.innerText = "重新开始";
-             btn.onclick = () => location.reload();
-         }
-     },
-
-             this.openOverlay('game-over-modal');
-             document.getElementById('dice-controls').innerHTML = '';
-
-             const btn = document.querySelector('#game-over-modal button');
-             btn.innerText = "重新开始";
-             btn.onclick = () => location.reload();
-         }
-     },
-
         winGame(type) {
             this.state.isGameOver = true; 
             this.isMoving = false; 
@@ -1755,26 +1739,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         `;
                         list.appendChild(div);
                     });
-
-             // 新增：宣布破产按钮（苹果风格红色大按钮）
-             const bankruptcyBtn = document.createElement('div');
-             bankruptcyBtn.className = 'mt-6';
-             bankruptcyBtn.innerHTML = `
-                 <button onclick="game.declareBankruptcy()" 
-                         class="w-full py-4 bg-red-600 dark:bg-red-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-red-900/30 tap-effect active:scale-95 transition-all flex items-center justify-center gap-2">
-                     ☠️ 宣布破产（结束游戏）
-                 </button>
-                 <div class="text-[10px] text-red-300 dark:text-red-400 text-center mt-2 opacity-70">
-                     当你觉得债务无法翻身时，可主动选择破产
-                 </div>
-             `;
-             list.appendChild(bankruptcyBtn);
-
-             // 底部留白（可选，美观用）
-             const empty = document.createElement('div');
-             empty.className = 'h-10';
-             list.appendChild(empty);
-
                 }
             }
         },
@@ -1823,6 +1787,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }
             document.getElementById('progress-bar').style.width = percent + '%';
 
+            if (!this.state.isFastTrack && this.monthlyFlow < 0 && this.state.cash < 0) document.getElementById('bankrupt-warn').classList.remove('hidden');
+            else document.getElementById('bankrupt-warn').classList.add('hidden');
+
+            this.renderDiceControls();
+        },
         
         renderBoard() {
             const board = document.getElementById('game-board'); 
@@ -1843,25 +1812,24 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
                 div.className = `tile ${tile.color} ${extraClass}`;
                 
+                // 如果是快车道梦想格，且是玩家选中的，高亮
+                if (this.state.isFastTrack && tile.type === 'FT_Dream') {
+                    div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
 
-             // 默认显示所有格子
-             div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
+                if (this.state.isFastTrack && tile.type === 'FT_Biz') {
+                    if (this.state.fastTrackBiz[idx]) {
+                        const biz = this.state.fastTrackBiz[idx];
+                        div.innerHTML = `
+                            <div class="tile-icon text-lg">${biz.icon}</div>
+                            <div class="text-[8px] font-bold opacity-90 scale-90 tracking-tight leading-none">${biz.name}</div>
+                            <div class="text-[7px] opacity-70">已拥有</div>
+                        `;
+                    }
+                }
 
-             // 快车道特殊显示（会覆盖默认）
-             if (this.state.isFastTrack) {
-                 if (tile.type === 'FT_Dream') {
-                     div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
-                 }
-                 if (tile.type === 'FT_Biz' && this.state.fastTrackBiz[idx]) {
-                     const biz = this.state.fastTrackBiz[idx];
-                     div.innerHTML = `
-                         <div class="tile-icon text-lg">${biz.icon}</div>
-                         <div class="text-[8px] font-bold opacity-90 scale-90 tracking-tight leading-none">${biz.name}</div>
-                         <div class="text-[7px] opacity-70">已拥有</div>
-                     `;
-                 }
-             }
-
+                } else {
+                    div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
+                }
                 
                 if (idx === this.state.pos) {
                     div.classList.add('active');
