@@ -41,8 +41,6 @@
         transform: translate3d(0,0,0);
         /* 明确告诉浏览器这个区域只允许垂直拖动 */
         touch-action: pan-y;
-        /* 核心：开启 iOS 惯性滚动 */
-        -webkit-overflow-scrolling: touch;
         /* 滚动条逻辑 */
         overflow-y: auto;
         overflow-x: hidden;
@@ -116,7 +114,6 @@
 
         .ios-scroll {
             overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important; /* 关键：开启 iOS 惯性滚动 */
             overscroll-behavior: contain; /* 防止滚动传导给 body */
         }
         
