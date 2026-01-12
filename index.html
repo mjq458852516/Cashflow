@@ -363,7 +363,7 @@
             <button onclick="game.closeModal()" class="w-full mt-6 py-2 mb-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
         </div>
 
-        <div id="dream-modal" class="glass fixed left-0 right-0 bottom-0 mx-auto w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] shadow-2xl hidden flex flex-col pb-safe-bottom z-50 h-[75dvh] transition-transform duration-300">
+        <div id="dream-modal" class="glass fixed left-0 right-0 !bottom-0 !mb-0 w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] shadow-2xl hidden flex flex-col pb-safe-bottom z-50 h-[75dvh] transition-transform duration-300">
     
             <div class="flex-shrink-0 px-6 pt-6 pb-2 z-10 bg-inherit rounded-t-[32px] relative border-b border-black/5 dark:border-white/5">
                 <div class="w-12 h-1.5 bg-slate-200 dark:bg-white/20 rounded-full mx-auto mb-3"></div>
@@ -917,21 +917,13 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 return;
             }
 
+            // --- 修改开始：自动贷款逻辑 ---
             if (this.state.cash < 0) {
                 const debt = Math.abs(this.state.cash);
-                const liquidAssets = this.state.assets.filter(a => ['Stock','RealEstate','Business','Coin'].includes(a.type));
-                
-                if (liquidAssets.length === 0) {
-                    if (confirm(`⚠️ 现金赤字 $${debt.toLocaleString()}！\n\n您目前没有可变卖的资产，必须向银行借款才能继续游戏。\n\n点击【确定】自动借入所需金额。`)) {
-                            const borrowAmt = Math.ceil(debt / 1000) * 1000;
-                            this.manageLoan(borrowAmt);
-                            return; 
-                    } else { return; }
-                } else {
-                    alert("⚠️ 现金赤字！\n请点击顶部【资产 & 负债】按钮：\n1. 变卖资产\n2. 或申请银行借款\n\n直到手头现金 >= 0 方可继续。");
-                    this.toggleSheet();
-                    return;
-                }
+                const borrowAmt = Math.ceil(debt / 1000) * 1000;
+                this.manageLoan(borrowAmt);
+                this.log(`⚠️ 现金不足，自动借贷 $${borrowAmt.toLocaleString()}`, true);
+                // 借款后稍微暂停一下更新UI，然后允许继续掷骰子
             }
 
             if (this.state.charityTurns > 0) {
@@ -1456,10 +1448,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             // 如果是只显示信息（别人的梦想），隐藏确认按钮，并让关闭按钮变宽
             if (type === 'INFO_ONLY') {
                 btnAction.classList.add('hidden');
-                btnShort.classList.add('hidden'); // 确保做空按钮也隐藏
+                btnShort.classList.add('hidden'); 
                 btnCancel.innerText = '关闭';
-                btnCancel.classList.remove('flex-1'); // 移除原有宽度限制
-                btnCancel.classList.add('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white'); // 增加醒目样式
+                // 移除以前的宽度限制，设置为全宽，并加深颜色使其像个主按钮
+                btnCancel.classList.remove('flex-1', 'bg-slate-100', 'dark:bg-[#2c2c2e]', 'text-slate-500'); 
+                btnCancel.classList.add('w-full', 'bg-slate-900', 'dark:bg-white', 'text-white', 'dark:text-black', 'shadow-lg'); 
             } else {
                 btnAction.classList.remove('hidden');
                 btnCancel.classList.add('flex-1'); // 恢复默认
@@ -1634,25 +1627,30 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         },
 
      declareBankruptcy() {
-         if (confirm('☠️ 你确定要宣布破产吗？\n\n这将立即结束游戏，你将失去一切进展。')) {
-             this.state.isGameOver = true;
-             this.isMoving = false;
+         // --- 修改开始：直接执行破产，不再询问 ---
+         this.state.isGameOver = true;
+         this.isMoving = false;
+         
+         // 关闭当前的资产负债表
+         const sheet = document.getElementById('sheet-modal');
+         sheet.classList.add('hidden');
+         sheet.style.display = 'none';
 
-             document.getElementById('end-icon').innerText = '☠️';
-             document.getElementById('end-title').innerText = '破产清算';
-             document.getElementById('end-desc').innerHTML = `
-                 债务已将你压垮。<br><br>
-                 <span class="text-xs opacity-70">记住：坏债务会毁掉一切。<br>
-                 下次优先投资产生被动收入，避免过度消费。</span>
-             `;
+         document.getElementById('end-icon').innerText = '☠️';
+         document.getElementById('end-title').innerText = '破产清算';
+         document.getElementById('end-desc').innerHTML = `
+             债务已将你压垮。<br><br>
+             <span class="text-xs opacity-70">记住：坏债务会毁掉一切。<br>
+             下次优先投资产生被动收入，避免过度消费。</span>
+         `;
 
-             this.openOverlay('game-over-modal');
-             document.getElementById('dice-controls').innerHTML = '';
+         this.openOverlay('game-over-modal');
+         document.getElementById('dice-controls').innerHTML = '';
 
-             const btn = document.querySelector('#game-over-modal button');
-             btn.innerText = "重新开始";
-             btn.onclick = () => location.reload();
-         }
+         const btn = document.querySelector('#game-over-modal button');
+         btn.innerText = "重新开始";
+         btn.onclick = () => location.reload();
+         // --- 修改结束 ---
      },
 
         winGame(type) {
