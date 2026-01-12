@@ -880,12 +880,8 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
             if (this.state.downsizedTurns > 0) {
                 container.innerHTML = `
-                    <button onclick="game.rollDice(1)" class="flex-1 bg-white/10 backdrop-blur-md border border-white/10 text-white/50 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all tap-effect shadow-lg">
-                        <span class="text-2xl">💤</span> 
-                        <div class="flex flex-col leading-none">
-                            <span class="text-sm font-medium">暂停回合</span>
-                            <span class="text-[10px] opacity-60">剩余 ${this.state.downsizedTurns} 轮</span>
-                        </div>
+                    <button onclick="game.rollDice(1)" class="flex-1 bg-purple-900 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all tap-effect shadow-xl ${disabledClass}">
+                        🚫 停赛中 (${this.state.downsizedTurns}) - 跳过
                     </button>
                 `;
                 return;
@@ -1453,17 +1449,12 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             btnAction.classList.remove('hidden');
             btnCancel.classList.remove('hidden'); 
 
-            // 如果是只显示信息（别人的梦想），隐藏确认按钮，并让关闭按钮变宽
+            // 如果是只显示信息（别人的梦想），隐藏确认按钮
             if (type === 'INFO_ONLY') {
                 btnAction.classList.add('hidden');
-                btnShort.classList.add('hidden'); // 确保做空按钮也隐藏
                 btnCancel.innerText = '关闭';
-                btnCancel.classList.remove('flex-1'); // 移除原有宽度限制
-                btnCancel.classList.add('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white'); // 增加醒目样式
             } else {
                 btnAction.classList.remove('hidden');
-                btnCancel.classList.add('flex-1'); // 恢复默认
-                btnCancel.classList.remove('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white');
             }
             
             btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
@@ -1720,76 +1711,21 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 if (this.state.assets.length === 0) {
                     container.innerHTML = '<div class="text-white/30 text-center py-24 text-xs">暂无资产</div>';
                 } else {
-                    // --- 修改开始：合并特定资产逻辑 ---
-                    const mergeList = ['金币收藏', '优先股分红', '银行定期存单'];
-                    const mergedCounts = {};
-                
-                    // 1. 先统计需要合并的资产
                     this.state.assets.forEach(asset => {
-                        if (mergeList.includes(asset.name)) {
-                            if (!mergedCounts[asset.name]) {
-                                // 初始化统计对象
-                                mergedCounts[asset.name] = { 
-                                    ...asset, 
-                                    count: 1, 
-                                    totalFlow: asset.flow,
-                                    totalVal: asset.down // 用down字段暂存总价值/总成本
-                                };
-                        } else {
-                            mergedCounts[asset.name].count++;
-                            mergedCounts[asset.name].totalFlow += asset.flow;
-                            mergedCounts[asset.name].totalVal += asset.down;
-                        }
-                    }
-                });
-
-                    // 2. 渲染函数
-                    const renderItem = (asset, isMerged = false) => {
                         const isStock = asset.type === 'Stock';
-                        const badge = isStock ? 'Stock' : (isMerged ? 'Asset' : 'Biz/Real');
-                    
-                        let valStr = '';
-                        let titleStr = asset.name;
-
-                        if (isMerged) {
-                            // 合并显示的格式
-                            titleStr = `${asset.name} <span class="text-yellow-400/80 text-xs ml-1">x${asset.count}</span>`;
-                            valStr = `总值 $${asset.totalVal.toLocaleString()} · 流 $${asset.totalFlow}/月`;
-                        } else if (isStock) {
-                            valStr = `${asset.quantity}股 (成本 $${Math.floor(asset.cost)})`;
-                        } else {
-                            valStr = `+$${asset.flow.toLocaleString()}/月`;
-                        }
-
-                        // 只有非快车道且非合并显示的资产才显示单独卖出按钮（简化操作，合并资产建议去银行贷款处操作，这里为了UI整洁不放卖出）
-                        // 或者：如果想让合并资产也能卖，逻辑会比较复杂，这里暂时隐藏合并资产的卖出按钮
-                        const actionBtn = (this.state.isFastTrack || isMerged) ? '' : `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 py-1 rounded active:bg-red-500/40">卖出</button>`;
+                        const badge = isStock ? 'Stock' : 'Biz/Real';
+                        const valStr = isStock ? `${asset.quantity}股` : `+$${asset.flow.toLocaleString()}/月`;
+                        const actionBtn = this.state.isFastTrack ? '' : `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 rounded active:bg-red-500/40">卖出</button>`;
 
                         const div = document.createElement('div');
                         div.className = 'bg-white/10 p-3 rounded-2xl flex items-center justify-between text-white text-sm border border-white/5 mb-2';
                         div.innerHTML = `
-                            <div>
-                                <div class="font-bold flex items-center gap-2">${titleStr} <span class="text-[10px] bg-white/20 px-1 rounded h-fit">${badge}</span></div>
-                                <div class="text-[10px] opacity-60 mt-0.5">${valStr}</div>
-                            </div>
+                            <div><div class="font-bold">${asset.name} <span class="text-[10px] bg-white/20 px-1 rounded">${badge}</span></div><div class="text-[10px] opacity-60">${valStr}</div></div>
                             ${actionBtn}
                         `;
                         container.appendChild(div);
-                    };
-
-                    // 3. 执行渲染
-                    // 先渲染不需要合并的（房产、股票等）
-                    this.state.assets.forEach(asset => {
-                        if (!mergeList.includes(asset.name)) {
-                            renderItem(asset, false);
-                        }
                     });
-                
-                    // 再渲染合并后的
-                    Object.values(mergedCounts).forEach(item => {
-                        renderItem(item, true);
-                    });
-                    // --- 修改结束 ---
+                }
             } else if (tab === 'debt') {
                 const list = document.getElementById('liabilities-list');
                 list.innerHTML = '';
