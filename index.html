@@ -270,6 +270,10 @@
                     <div class="h-2.5 w-full bg-slate-200/60 dark:bg-white/10 rounded-full overflow-hidden relative">
                         <div id="progress-bar" class="h-full bg-gradient-to-r from-green-400 to-emerald-500 w-0 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(52,199,89,0.3)]"></div>
                     </div>
+                    <div class="mt-3 mb-2 flex justify-center"> <div id="log-capsule" class="bg-slate-100/90 dark:bg-[#2c2c2e]/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[11px] font-medium text-slate-500 dark:text-slate-400 max-w-[90%] truncate transition-all border border-white/50 dark:border-white/5 shadow-sm">
+                            欢迎来到现金流游戏
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -283,11 +287,6 @@
     <div class="fixed bottom-0 w-full glass rounded-t-[36px] shadow-[0_-8px_40px_rgba(0,0,0,0.08)] z-30 pb-safe-bottom hardware-accel">
         <div class="p-5 pb-2"> <div id="dice-controls" class="flex gap-3 h-14">
             </div>
-
-            <div class="mt-3 mb-2 flex justify-center"> <div id="log-capsule" class="bg-slate-100/90 dark:bg-[#2c2c2e]/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[11px] font-medium text-slate-500 dark:text-slate-400 max-w-[90%] truncate transition-all border border-white/50 dark:border-white/5 shadow-sm">
-                    欢迎来到现金流游戏
-                </div>
-            </div>
         </div>
     </div>
 
@@ -296,7 +295,7 @@
         <div id="card-modal" class="glass w-full sm:w-[380px] sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl hidden relative pb-safe-bottom hardware-accel">
             
             <div class="absolute top-6 left-6 px-3 py-1.5 bg-green-100 dark:bg-green-900/40 rounded-full text-[11px] font-bold text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/30 flex items-center gap-1 z-10 shadow-sm">
-                💵 <span id="modal-cash-display">$0</span>
+                🏦 <span id="modal-cash-display" class="text-red-600 dark:text-red-400">$0</span>
             </div>
 
             <button onclick="game.quickLoan()" class="absolute top-6 right-6 px-3 py-1.5 bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-[#3a3a3c] rounded-full text-[11px] font-bold text-slate-500 dark:text-slate-400 tap-effect flex items-center gap-1 z-10 border border-slate-200 dark:border-white/5 shadow-sm">
@@ -881,8 +880,12 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
             if (this.state.downsizedTurns > 0) {
                 container.innerHTML = `
-                    <button onclick="game.rollDice(1)" class="flex-1 bg-purple-900 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all tap-effect shadow-xl ${disabledClass}">
-                        🚫 停赛中 (${this.state.downsizedTurns}) - 跳过
+                    <button onclick="game.rollDice(1)" class="flex-1 bg-white/10 backdrop-blur-md border border-white/10 text-white/50 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all tap-effect shadow-lg">
+                        <span class="text-2xl">💤</span> 
+                        <div class="flex flex-col leading-none">
+                            <span class="text-sm font-medium">暂停回合</span>
+                            <span class="text-[10px] opacity-60">剩余 ${this.state.downsizedTurns} 轮</span>
+                        </div>
                     </button>
                 `;
                 return;
@@ -1423,7 +1426,8 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             
             this.openOverlay('card-modal');
             
-            document.getElementById('modal-cash-display').innerText = Math.floor(this.state.cash).toLocaleString();
+            // 显示当前银行贷款总额
+            document.getElementById('modal-cash-display').innerText = '-' + this.state.loan.toLocaleString();
 
             const title = document.getElementById('card-title');
             const desc = document.getElementById('card-desc');
@@ -1449,12 +1453,17 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             btnAction.classList.remove('hidden');
             btnCancel.classList.remove('hidden'); 
 
-            // 如果是只显示信息（别人的梦想），隐藏确认按钮
+            // 如果是只显示信息（别人的梦想），隐藏确认按钮，并让关闭按钮变宽
             if (type === 'INFO_ONLY') {
                 btnAction.classList.add('hidden');
+                btnShort.classList.add('hidden'); // 确保做空按钮也隐藏
                 btnCancel.innerText = '关闭';
+                btnCancel.classList.remove('flex-1'); // 移除原有宽度限制
+                btnCancel.classList.add('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white'); // 增加醒目样式
             } else {
                 btnAction.classList.remove('hidden');
+                btnCancel.classList.add('flex-1'); // 恢复默认
+                btnCancel.classList.remove('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white');
             }
             
             btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
@@ -1711,21 +1720,76 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 if (this.state.assets.length === 0) {
                     container.innerHTML = '<div class="text-white/30 text-center py-24 text-xs">暂无资产</div>';
                 } else {
+                    // --- 修改开始：合并特定资产逻辑 ---
+                    const mergeList = ['金币收藏', '优先股分红', '银行定期存单'];
+                    const mergedCounts = {};
+                
+                    // 1. 先统计需要合并的资产
                     this.state.assets.forEach(asset => {
+                        if (mergeList.includes(asset.name)) {
+                            if (!mergedCounts[asset.name]) {
+                                // 初始化统计对象
+                                mergedCounts[asset.name] = { 
+                                    ...asset, 
+                                    count: 1, 
+                                    totalFlow: asset.flow,
+                                    totalVal: asset.down // 用down字段暂存总价值/总成本
+                                };
+                        } else {
+                            mergedCounts[asset.name].count++;
+                            mergedCounts[asset.name].totalFlow += asset.flow;
+                            mergedCounts[asset.name].totalVal += asset.down;
+                        }
+                    }
+                });
+
+                    // 2. 渲染函数
+                    const renderItem = (asset, isMerged = false) => {
                         const isStock = asset.type === 'Stock';
-                        const badge = isStock ? 'Stock' : 'Biz/Real';
-                        const valStr = isStock ? `${asset.quantity}股` : `+$${asset.flow.toLocaleString()}/月`;
-                        const actionBtn = this.state.isFastTrack ? '' : `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 rounded active:bg-red-500/40">卖出</button>`;
+                        const badge = isStock ? 'Stock' : (isMerged ? 'Asset' : 'Biz/Real');
+                    
+                        let valStr = '';
+                        let titleStr = asset.name;
+
+                        if (isMerged) {
+                            // 合并显示的格式
+                            titleStr = `${asset.name} <span class="text-yellow-400/80 text-xs ml-1">x${asset.count}</span>`;
+                            valStr = `总值 $${asset.totalVal.toLocaleString()} · 流 $${asset.totalFlow}/月`;
+                        } else if (isStock) {
+                            valStr = `${asset.quantity}股 (成本 $${Math.floor(asset.cost)})`;
+                        } else {
+                            valStr = `+$${asset.flow.toLocaleString()}/月`;
+                        }
+
+                        // 只有非快车道且非合并显示的资产才显示单独卖出按钮（简化操作，合并资产建议去银行贷款处操作，这里为了UI整洁不放卖出）
+                        // 或者：如果想让合并资产也能卖，逻辑会比较复杂，这里暂时隐藏合并资产的卖出按钮
+                        const actionBtn = (this.state.isFastTrack || isMerged) ? '' : `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 py-1 rounded active:bg-red-500/40">卖出</button>`;
 
                         const div = document.createElement('div');
                         div.className = 'bg-white/10 p-3 rounded-2xl flex items-center justify-between text-white text-sm border border-white/5 mb-2';
                         div.innerHTML = `
-                            <div><div class="font-bold">${asset.name} <span class="text-[10px] bg-white/20 px-1 rounded">${badge}</span></div><div class="text-[10px] opacity-60">${valStr}</div></div>
+                            <div>
+                                <div class="font-bold flex items-center gap-2">${titleStr} <span class="text-[10px] bg-white/20 px-1 rounded h-fit">${badge}</span></div>
+                                <div class="text-[10px] opacity-60 mt-0.5">${valStr}</div>
+                            </div>
                             ${actionBtn}
                         `;
                         container.appendChild(div);
+                    };
+
+                    // 3. 执行渲染
+                    // 先渲染不需要合并的（房产、股票等）
+                    this.state.assets.forEach(asset => {
+                        if (!mergeList.includes(asset.name)) {
+                            renderItem(asset, false);
+                        }
                     });
-                }
+                
+                    // 再渲染合并后的
+                    Object.values(mergedCounts).forEach(item => {
+                        renderItem(item, true);
+                    });
+                    // --- 修改结束 ---
             } else if (tab === 'debt') {
                 const list = document.getElementById('liabilities-list');
                 list.innerHTML = '';
