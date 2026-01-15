@@ -830,8 +830,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             `;
             
             const btn = document.querySelector('#game-over-modal button');
-            btn.innerText = "开始飙车";
-            btn.onclick = () => this.closeModal();
+            btn.style.display = 'none';
         },
 
         get liabilitiesExpense() { return this.state.liabilities.reduce((sum, item) => sum + item.expense, 0); },
