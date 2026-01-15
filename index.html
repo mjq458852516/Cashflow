@@ -540,61 +540,65 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
         ],
 
-        // 快车道地图 (48格) - 经典还原
-        // 颜色代码: Business=Opp颜色, Dream=Baby颜色, Charity=Charity颜色, Cashflow=Pay颜色, Hazard=Doodad/Down颜色
+        // 快车道地图 (48格) - 严格按照现金流101结构
+        // 每 12 格为一圈：
+        // 5 Business, 3 Pay, 1 Dream, 1 Charity, 2 Hazard
         fastTrackTiles: [
-            // 第一组 12
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏢' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '💖' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏭' },
-            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
-            { type: 'FT_Charity', label: '慈善', color: 'tile-charity', icon: '💜' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏥' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏝️' },
-            { type: 'FT_Hazard', label: '税务审计', color: 'tile-doodad', icon: '👮', effect: 'audit' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏬' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🚤' },
-            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🎬' },
-            // 第二组 12
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏰' },
-            { type: 'FT_Hazard', label: '离婚', color: 'tile-down', icon: '💔', effect: 'divorce' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🍕' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🗿' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '⛏️' },
-            { type: 'FT_Hazard', label: '官司', color: 'tile-doodad', icon: '⚖️', effect: 'lawsuit' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🧪' },
-            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🎢' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏦' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏟️' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '📡' },
-            // 第三组 12
-            { type: 'FT_Charity', label: '慈善', color: 'tile-charity', icon: '💜' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🚛' },
-            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🦁' },
-            { type: 'FT_Hazard', label: '税务审计', color: 'tile-doodad', icon: '👮', effect: 'audit' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏫' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🚁' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🧬' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🎪' },
-            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
-            { type: 'FT_Hazard', label: '离婚', color: 'tile-down', icon: '💔', effect: 'divorce' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🔌' },
-            // 第四组 12
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏰' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏯' },
-            { type: 'FT_Hazard', label: '官司', color: 'tile-doodad', icon: '⚖️', effect: 'lawsuit' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🚄' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '⛲' },
-            { type: 'FT_Pay', label: '现金流日', color: 'tile-pay', icon: '💰' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🛍️' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '🏝️' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🥦' },
-            { type: 'FT_Charity', label: '慈善', color: 'tile-charity', icon: '💜' },
-            { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🤖' },
-            { type: 'FT_Dream', label: '梦想', color: 'tile-baby', icon: '⛷️' },
+            // ===== 第 1 圈 =====
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Charity',label: '慈善',  color: 'tile-charity', icon: '💜' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Dream',  label: '梦想',  color: 'tile-baby',    icon: '💖' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+
+            // ===== 第 2 圈 =====
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Charity',label: '慈善',  color: 'tile-charity', icon: '💜' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Dream',  label: '梦想',  color: 'tile-baby',    icon: '💖' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+
+            // ===== 第 3 圈 =====
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Charity',label: '慈善',  color: 'tile-charity', icon: '💜' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Dream',  label: '梦想',  color: 'tile-baby',    icon: '💖' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+
+            // ===== 第 4 圈 =====
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Charity',label: '慈善',  color: 'tile-charity', icon: '💜' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Dream',  label: '梦想',  color: 'tile-baby',    icon: '💖' },
+            { type: 'FT_Biz',    label: '投资',  color: 'tile-opp',     icon: '🏢' },
+            { type: 'FT_Hazard', label: '意外',  color: 'tile-doodad',  icon: '⚠️' },
+            { type: 'FT_Pay',    label: '现金流', color: 'tile-pay',     icon: '💰' },
         ],
 
         smallDeals: [
@@ -663,7 +667,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             isGameOver: false,
             isFastTrack: false, // 是否在快车道
             userDream: null,    // 选中的梦想
-            ftAddedCashflow: 0, // 快车道新增现金流
             
             cash: 0,
             loan: 0,
@@ -784,26 +787,28 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         enterFastTrack() {
             this.state.isFastTrack = true;
             this.state.isGameOver = false;
-            
-            // 快车道初始设置：
-            // 1. 收入变为被动收入
-            // 2. 现金 = 原始现金 + (被动收入 * 100) (简化版规则奖励)
-            const oldPassive = this.state.passive;
-            this.state.cash += (oldPassive * 100);
-            
-            // 清理旧状态
-            this.state.assets = []; 
-            this.state.liabilities = []; 
+
+            const cashflow = this.state.passive;     // 原本的被动收入 = 快车道现金流
+            this.state.cash += cashflow * 100;       // 原版规则
+
+            // 清空老鼠赛跑数据
+            this.state.assets = [];
+            this.state.liabilities = [];
             this.state.childCount = 0;
             this.state.loan = 0;
             this.state.basicTax = 0;
             this.state.otherExpense = 0;
             this.state.pos = 0;
-            this.state.ftAddedCashflow = 0;
-            
-            // 新的“工资”就是现金流日收入
-            this.state.salary = oldPassive;
-            this.state.passive = 0; // 这里的passive只记录快车道新增的，用于判断 +50k 胜利条件
+
+            // 快车道只有一个收入：现金流
+            this.state.salary = 0;
+            this.state.passive = cashflow;
+
+            this.renderBoard();
+            this.updateUI();
+
+            document.getElementById('game-phase-badge').innerText = '🏎️';
+            document.getElementById('game-phase-text').innerText = '快车道';
 
             this.renderBoard();
             this.updateUI();
@@ -1081,6 +1086,17 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     this.payDay();
                     break;
 
+                case 'FT_Charity':
+                    this.log('💜 快车道慈善：下一轮可多投一个骰子（可扩展规则）');
+                    break;
+
+                case 'FT_Hazard':
+                    const loss = Math.floor(this.state.cash * 0.1);
+                    this.state.cash -= loss;
+                    this.log(`⚠️ 快车道风险事件：现金 -$${loss.toLocaleString()}`);
+                    this.updateUI();
+                    break;
+    
                 case 'FT_Biz':
                     // 如果这个格子已经投资过了，只提示
                     if (this.state.fastTrackBiz[this.state.pos]) {
@@ -1554,8 +1570,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         
                         // 快车道特殊逻辑：现金流累加
                         if (this.state.isFastTrack) {
-                            this.state.ftAddedCashflow += card.flow;
-                            this.state.salary += card.flow; // 快车道上salary视作现金流日收入基数
+                            this.state.passive += card.flow;
                             this.log(`🚀 投资成功! 现金流 +$${card.flow.toLocaleString()}`);
                         } else {
                             this.log(`🏠 购入资产: +$${card.flow.toLocaleString()}/月`);
@@ -1614,7 +1629,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
             if (this.state.isFastTrack) {
                 // 快车道胜利：新增现金流 > 50000
-                if (this.state.ftAddedCashflow >= 50000) {
+                if (this.state.passive >= 50000) {
                     this.winGame('CASHFLOW');
                 }
             } else {
@@ -1876,7 +1891,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             let percent = 0;
             if (this.state.isFastTrack) {
                 // 快车道进度条：目标是 +50000 现金流
-                percent = Math.min((this.state.ftAddedCashflow / 50000) * 100, 100);
+                percent = Math.min((this.state.passive / 50000) * 100, 100);
             } else {
                 percent = totalExp > 0 ? Math.min((this.state.passive / totalExp) * 100, 100) : 100;
             }
