@@ -829,6 +829,13 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 </div>
             `;
             
+            // 晋级快车道只是提示，不需要“重新开始”按钮
+            const btn = document.querySelector('#game-over-modal button');
+            if (btn) {
+                btn.style.display = 'none';
+                btn.onclick = null;
+            }
+            
             const btn = document.querySelector('#game-over-modal button');
             btn.style.display = 'none';
         },
@@ -1659,6 +1666,13 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
          `;
 
          this.openOverlay('game-over-modal');
+         const btn = document.querySelector('#game-over-modal button');
+         if (btn) {
+             btn.style.display = 'block';
+             btn.innerText = '重新开始';
+             btn.onclick = () => location.reload();
+         }
+        
          document.getElementById('dice-controls').innerHTML = '';
 
          const btn = document.querySelector('#game-over-modal button');
