@@ -788,8 +788,8 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             this.state.isFastTrack = true;
             this.state.isGameOver = false;
 
-            const cashflow = this.state.passive;     // 原本的被动收入 = 快车道现金流
-            this.state.cash += cashflow * 100;       // 原版规则
+            const cashflow = this.state.passive;
+            this.state.cash += cashflow * 100;       // 原版规则：一次性奖励
 
             // 清空老鼠赛跑数据
             this.state.assets = [];
@@ -803,36 +803,25 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             // 快车道只有一个收入：现金流
             this.state.salary = 0;
             this.state.passive = cashflow;
-
+        
             this.renderBoard();
             this.updateUI();
 
             document.getElementById('game-phase-badge').innerText = '🏎️';
             document.getElementById('game-phase-text').innerText = '快车道';
-
-            this.renderBoard();
-            this.updateUI();
-            
-            // UI 更新
-            document.getElementById('game-phase-badge').innerText = '🏎️';
-            document.getElementById('game-phase-text').innerText = '快车道';
-            
-            this.openOverlay('game-over-modal');
-            document.getElementById('end-icon').innerText = '🚀';
-            document.getElementById('end-title').innerText = '晋级快车道！';
-            document.getElementById('end-desc').innerHTML = `
-                你已财务自由！获得启动资金 <b class="text-green-500">$${(oldPassive*100).toLocaleString()}</b>。<br><br>
-                <div class="text-left bg-slate-100 dark:bg-white/10 p-3 rounded-xl text-xs space-y-2">
-                <div class="font-bold">🏆 胜利条件 (二选一):</div>
-                <div>1. 购买你的梦想: <span class="text-pink-500 font-bold">${this.state.userDream.name}</span></div>
-                <div>2. 或增加现金流: <span class="text-green-500 font-bold">+$50,000/月</span></div>
-                </div>
-            `;
-            
-            const btn = document.querySelector('#game-over-modal button');
-            btn.style.display = 'block'; // 确保按钮显示
-            btn.innerText = "开启新征程"; // 修改文字
-            btn.onclick = () => game.closeModal(); // 点击后关闭弹窗继续游戏
+        
+            this.log(`🚀 已进入快车道！目标：实现梦想 ${this.state.userDream.name}`, true);
+        
+            // 新增：显示庆祝卡片（仅关闭按钮，无重新开始）
+            this.queueEvent({
+                type: 'INFO_ONLY',
+                data: {
+                    name: '🚀 恭喜进入快车道！',
+                    desc: '你的被动收入已超过总支出。<br><br>现在你拥有巨额现金流奖励，<br>目标是实现你的梦想或建立更大帝国。<br><br><span class="text-xs opacity-70">继续掷骰子前进吧！</span>',
+                    icon: '🏎️'
+                }
+            });
+            this.processQueue();
         },
 
 
