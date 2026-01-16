@@ -363,7 +363,7 @@
             <button onclick="game.closeModal()" class="w-full mt-6 py-2 mb-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
         </div>
 
-        <div id="dream-modal" class="glass fixed left-0 right-0 !bottom-0 !mb-0 w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] shadow-2xl hidden flex flex-col pb-safe-bottom z-50 h-[75dvh] transition-transform duration-300">
+        <div id="dream-modal" class="glass fixed left-0 right-0 !bottom-0 !mb-0 w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] shadow-2xl hidden flex flex-col pb-safe-bottom z-50 h-[85dvh] transition-transform duration-300">
     
             <div class="flex-shrink-0 px-6 pt-6 pb-2 z-10 bg-inherit rounded-t-[32px] relative border-b border-black/5 dark:border-white/5">
                 <div class="w-12 h-1.5 bg-slate-200 dark:bg-white/20 rounded-full mx-auto mb-3"></div>
@@ -830,8 +830,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             `;
             
             const btn = document.querySelector('#game-over-modal button');
-            btn.style.display = 'none';
+            btn.style.display = 'block'; // 确保按钮显示
+            btn.innerText = "开启新征程"; // 修改文字
+            btn.onclick = () => game.closeModal(); // 点击后关闭弹窗继续游戏
         },
+
 
         get liabilitiesExpense() { return this.state.liabilities.reduce((sum, item) => sum + item.expense, 0); },
         get childExpense() { return this.state.childCount * this.state.perBabyCost; },
@@ -1122,45 +1125,25 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     this.state.currentCard.tempPos = this.state.pos;
                     break;
                 case 'FT_Dream':
-                    // 逻辑修改：只有是自己的梦想才能购买
-                    // 30% 几率刷出玩家自己的梦想
-                    const isMyDream = (Math.random() > 0.7); 
-                    // 如果随机到了自己的梦想，或者是该格子的固定配置（如有），则显示购买
-                    // 这里简化逻辑：如果是随机到的，或者是为了游戏性强制命中的
+                     // 逻辑修改：快车道梦想格仅做展示，不直接在此购买（或者根据你的需求，纯粹作为踩中事件展示）
+                     // 将原来的 INFO_DECISION 改为 INFO_ONLY，这样 showCardModal 就不会渲染“执行”按钮
                     
-                    const targetDream = isMyDream ? this.state.userDream : CONFIG.dreams[Math.floor(Math.random() * CONFIG.dreams.length)];
-                    const isTargetMyDream = targetDream.id === this.state.userDream.id;
+                     // 随机显示一个梦想（或者显示玩家自己的梦想）
+                     const isMyDream = (Math.random() > 0.7); 
+                     const targetDream = isMyDream ? this.state.userDream : CONFIG.dreams[Math.floor(Math.random() * CONFIG.dreams.length)];
+                    
+                     // 无论是不是自己的梦想，都只显示信息，不显示购买按钮
+                     this.queueEvent({
+                         type: 'INFO_ONLY', // 关键修改：使用 INFO_ONLY 类型
+                         data: {
+                             name: `抵达梦想: ${targetDream.name}`,
+                             desc: `你停留在了梦想格。<br>这是一个关于 ${targetDream.name} 的机会。<br><span class="text-xs text-slate-400">继续积累财富来实现它吧！</span>`,
+                             icon: targetDream.icon
+                         }
+                     });
+                     this.processQueue();
+                     break;
 
-                    if (isTargetMyDream) {
-                        this.queueEvent({
-                            type: 'INFO_DECISION',
-                            data: {
-                                name: `你的梦想: ${targetDream.name}`,
-                                desc: `💖 <b>这是你梦寐以求的！</b><br>支付 $${targetDream.cost.toLocaleString()} 购买并<b>赢得游戏</b>！`,
-                                icon: targetDream.icon,
-                                cost: targetDream.cost,
-                                onConfirm: () => {
-                                    if (this.state.cash >= targetDream.cost) {
-                                        this.state.cash -= targetDream.cost;
-                                        this.winGame('DREAM');
-                                    } else {
-                                        this.log('现金不足', true);
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        // 别人的梦想：只显示信息，没有确认购买按钮
-                        this.queueEvent({
-                            type: 'INFO_ONLY',
-                            data: {
-                                name: `别人的梦想: ${targetDream.name}`,
-                                desc: `这是别人的梦想，你只能看看。<br>成本: $${targetDream.cost.toLocaleString()}<br><span class="text-xs text-slate-400">(你只能购买自己选定的梦想)</span>`,
-                                icon: targetDream.icon
-                            }
-                        });
-                    }                    this.processQueue();
-                    break;
                 case 'FT_Charity':
                     this.triggerCharity();
                     break;
