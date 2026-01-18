@@ -37,18 +37,15 @@
 
         /* --- iPhone 滚动重构核心样式 --- */
         .ios-scroll-container {
-        transform: translate3d(0,0,0);
-        touch-action: pan-y;
-        -webkit-overflow-scrolling: touch;
-        overflow-y: auto;
-        overflow-x: hidden;
-        overscroll-behavior: contain;
-        pointer-events: auto;
+            transform: translate3d(0,0,0);
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            pointer-events: auto;
         }
-
-        .ios-scroll-container::-webkit-scrollbar {
-            display: none;
-        }
+        .ios-scroll-container::-webkit-scrollbar { display: none; }
         
         /* --- iPhone 适配核心修复 --- */
         .pt-safe-top {
@@ -135,7 +132,6 @@
         
         .tap-effect { transition: transform 0.1s, opacity 0.1s; cursor: pointer; touch-action: manipulation; }
         .tap-effect:active { transform: scale(0.97); opacity: 0.8; }
-        .tap-effect:disabled { opacity: 0.5; transform: none; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -212,17 +208,9 @@
             z-index: 60 !important; 
             background-color: rgba(0, 0, 0, 0.4); 
             backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
         } 
         @media (prefers-color-scheme: dark) {
             #modal-overlay { background-color: rgba(0, 0, 0, 0.65); }
-        }
-
-        /* 专门修复梦想弹窗的底部 */
-        #dream-modal {
-            bottom: 0 !important;
-            padding-bottom: env(safe-area-inset-bottom) !important;
-            margin-bottom: 0 !important;
         }
     </style>
 </head>
@@ -354,21 +342,24 @@
             <button onclick="game.closeModal()" class="w-full mt-6 py-2 mb-2 text-slate-400 text-xs font-semibold">跳过此回合</button>
         </div>
 
-        <!-- 梦想弹窗：修正对齐问题 -->
-        <div id="dream-modal" class="glass fixed left-0 right-0 mx-auto w-full sm:w-[360px] rounded-t-[32px] shadow-2xl hidden flex flex-col z-50 h-[75dvh] transition-transform duration-300">
+        <!-- 梦想选择弹窗：修复底部对齐问题 -->
+        <div id="dream-modal" class="glass fixed left-0 right-0 bottom-0 mx-auto w-full sm:w-[360px] sm:rounded-[32px] rounded-t-[32px] shadow-2xl hidden flex flex-col z-50 h-[75dvh] transition-transform duration-300">
     
             <div class="flex-shrink-0 px-6 pt-6 pb-2 z-10 bg-inherit rounded-t-[32px] relative border-b border-black/5 dark:border-white/5">
                 <div class="w-12 h-1.5 bg-slate-200 dark:bg-white/20 rounded-full mx-auto mb-3"></div>
                 <h3 class="text-xl font-bold text-slate-800 dark:text-white text-center">选择你的梦想</h3>
                 <p class="text-xs text-slate-400 text-center mt-1">这是你进入快车道后的终极目标。</p>
-                </div>
+            </div>
 
-                <div class="relative flex-1 min-h-0 w-full">
-                    <div id="dream-list" class="ios-scroll-container absolute inset-0 px-6 py-4 space-y-3 pb-20">
-                        </div>
-        
-                     <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white/90 dark:from-[#1c1c1e] to-transparent pointer-events-none rounded-b-[32px]"></div>
+            <div class="relative flex-1 min-h-0 w-full">
+                <!-- 列表容器：pb-safe-bottom 加在这里 -->
+                <div id="dream-list" class="ios-scroll-container absolute inset-0 px-6 py-4 space-y-3 pb-safe-bottom">
+                    <!-- JS 生成内容 -->
+                    <div class="h-20"></div> <!-- 底部额外垫高，防止内容被遮挡 -->
                 </div>
+                
+                <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white/90 dark:from-[#1c1c1e] to-transparent pointer-events-none rounded-b-[32px]"></div>
+            </div>
         </div>
         
         <div id="game-over-modal" class="glass w-[90%] sm:w-[360px] rounded-[32px] p-8 shadow-2xl hidden flex-col items-center text-center dark:border dark:border-white/10 hardware-accel pb-safe-bottom">
@@ -427,8 +418,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
     const CONFIG = {
         basicLivingExpense: 0,
-        
-        // 梦想列表
         dreams: [
             { id: 'island', name: '私人岛屿', cost: 200000, icon: '🏝️', desc: '在太平洋拥有属于自己的度假天堂。' },
             { id: 'mayor', name: '竞选市长', cost: 150000, icon: '🏛️', desc: '投身公共服务，管理整个城市。' },
@@ -439,8 +428,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { id: 'yacht', name: '豪华游艇', cost: 300000, icon: '🛥️', desc: '在地中海拥有这艘名为“自由号”的巨轮。' },
             { id: 'school', name: '希望小学', cost: 500000, icon: '🏫', desc: '建立一所全免费的精英学校。' }
         ],
-
-        // 职业数据
         professions: [
             {
                 name: '保安', icon: '🧹', salary: 1600, savings: 1600, perChild: 70,
@@ -503,8 +490,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 expenses: { tax: 2350, mortgage: 1330, car: 300, credit: 660, retail: 50, loan: 0, other: 2210 }
             }
         ],
-        
-        // 老鼠赛跑地图 (24格)
         tiles: [
             { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
@@ -531,9 +516,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
         ],
-
-        // 快车道地图 (48格) - 经典还原
-        // 颜色代码: Business=Opp颜色, Dream=Baby颜色, Charity=Charity颜色, Cashflow=Pay颜色, Hazard=Doodad/Down颜色
         fastTrackTiles: [
             // 第一组 12
             { type: 'FT_Biz', label: '投资', color: 'tile-opp', icon: '🏢' },
@@ -606,7 +588,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { name: '洗车房', type: 'Business', cost: 150000, down: 30000, flow: 1000, desc: '全自动洗车生意。需要较多首付。', icon: '🚗' },
             { name: '软件公司 IPO', type: 'Business', cost: 50000, down: 50000, flow: 0, desc: '私募股权。高风险高回报，上市后可能翻10倍。', icon: '💻' }
         ],
-        // 快车道生意
         fastTrackDeals: [
             { name: '生物科技公司', cost: 200000, flow: 10000, icon: '🧬', desc: '治愈罕见病，市场潜力巨大。' },
             { name: '炸鸡连锁店', cost: 150000, flow: 9000, icon: '🍗', desc: '全球特许经营扩张计划。' },
@@ -628,7 +609,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { type: 'Buyer', target: '金币收藏', price: 1000, desc: '金价暴涨！收藏家急寻克鲁格金币，出价 $1,000。' },
             { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！你的原始股价值飙升至 $250,000！' }
         ],
-
         doodads: [
             { name: '周末度假', cost: 2000, icon: '🏖️' },
             { name: '购物狂欢', cost: 3000, icon: '🛍️' },
@@ -645,7 +625,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { name: '奢侈手表', cost: 8000, icon: '⌚' },
             { name: '游艇保养', cost: 12000, icon: '⚓' }
         ],
-
     };
 
     let uiTimer = null; 
@@ -653,9 +632,9 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
     const game = {
         state: {
             isGameOver: false,
-            isFastTrack: false, // 是否在快车道
-            userDream: null,    // 选中的梦想
-            ftAddedCashflow: 0, // 快车道新增现金流
+            isFastTrack: false, 
+            userDream: null,    
+            ftAddedCashflow: 0, 
             
             cash: 0,
             loan: 0,
@@ -672,8 +651,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             charityTurns: 0, 
             eventQueue: [],
             fastTrackCharityTurns: 0, 
-            fastTrackBiz: {}, // 保存每个格子已投资的项目
-
+            fastTrackBiz: {}, 
             
             jobTitle: '',
             jobIcon: '',
@@ -684,7 +662,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
         isMoving: false, 
 
-        // 初始化：先选梦想
         init() {
             this.renderDreamSelection();
         },
@@ -692,12 +669,13 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         renderDreamSelection() {
             this.openOverlay('dream-modal');
             const list = document.getElementById('dream-list');
-            list.innerHTML = '';
+            // 清空除 spacer 以外的内容
+            list.innerHTML = ''; 
+            
             CONFIG.dreams.forEach(dream => {
                 const btn = document.createElement('button');
                 btn.className = "block w-full p-4 mb-3 rounded-2xl border bg-white/60 dark:bg-[#2c2c2e]/60 border-slate-100 dark:border-white/5 active:bg-pink-50 dark:active:bg-pink-900/20 active:scale-[0.98] transition-all text-left group shadow-sm relative overflow-hidden";
                 btn.onclick = (e) => {
-                     // 阻止事件冒泡，防止触发底下的元素
                      e.stopPropagation(); 
                      this.startGame(dream);
                 };
@@ -716,11 +694,15 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                `;
                list.appendChild(btn);
             });
+            // 底部垫高
+            const spacer = document.createElement('div');
+            spacer.className = "h-20";
+            list.appendChild(spacer);
         },
 
         startGame(selectedDream) {
             this.state.userDream = selectedDream;
-            this.closeModal(); // 关闭梦想弹窗
+            this.closeModal(); 
             
             this.state.isGameOver = false;
             this.state.isFastTrack = false;
@@ -777,13 +759,9 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             this.state.isFastTrack = true;
             this.state.isGameOver = false;
             
-            // 快车道初始设置：
-            // 1. 收入变为被动收入
-            // 2. 现金 = 原始现金 + (被动收入 * 100) (简化版规则奖励)
             const oldPassive = this.state.passive;
             this.state.cash += (oldPassive * 100);
             
-            // 清理旧状态
             this.state.assets = []; 
             this.state.liabilities = []; 
             this.state.childCount = 0;
@@ -793,14 +771,12 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             this.state.pos = 0;
             this.state.ftAddedCashflow = 0;
             
-            // 新的“工资”就是现金流日收入
             this.state.salary = oldPassive;
-            this.state.passive = 0; // 这里的passive只记录快车道新增的，用于判断 +50k 胜利条件
+            this.state.passive = 0; 
 
             this.renderBoard();
             this.updateUI();
             
-            // UI 更新
             document.getElementById('game-phase-badge').innerText = '🏎️';
             document.getElementById('game-phase-text').innerText = '快车道';
             
@@ -827,7 +803,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             const loanInterest = this.state.loan * 0.1;
             return this.state.basicTax + this.state.otherExpense + this.liabilitiesExpense + this.childExpense + loanInterest;
         },
-        // 快车道模式下，salary 就是基础现金流日收入，passive 是新增的
         get monthlyFlow() { 
             if (this.state.isFastTrack) return this.state.salary + this.state.passive;
             return (this.state.salary + this.state.passive) - this.totalExpense; 
@@ -844,18 +819,14 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             const disabledClass = this.isMoving ? "opacity-50 pointer-events-none" : "";
             const commonClass = `tap-effect flex-1 bg-[#1C1C1E] dark:bg-white dark:text-black text-white rounded-2xl font-bold text-lg shadow-xl shadow-slate-300 dark:shadow-none flex items-center justify-center gap-2 active:bg-black transition-all ${disabledClass}`;
 
-            // 快车道默认2个骰子
             if (this.state.isFastTrack) {
                 container.innerHTML = '';
-
-                // 默认双骰按钮
                 const btn2 = document.createElement('button');
                 btn2.onclick = () => game.rollDice(2);
                 btn2.className = `tap-effect flex-1 bg-pink-600 dark:bg-pink-500 dark:text-white text-white rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 ${this.isMoving ? 'opacity-50 pointer-events-none' : ''}`;
                 btn2.innerHTML = '🎲🎲 双骰';
                 container.appendChild(btn2);
 
-                // 慈善三骰按钮（只在有次数时显示）
                 if (this.state.fastTrackCharityTurns > 0) {
                     const btn3 = document.createElement('button');
                     btn3.onclick = () => {
@@ -909,23 +880,16 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 return;
             }
 
-            // --- 自动贷款逻辑修改 ---
+            // --- 自动贷款逻辑 ---
             if (this.state.cash < 0) {
                 const debt = Math.abs(this.state.cash);
-                const liquidAssets = this.state.assets.filter(a => ['Stock','RealEstate','Business','Coin'].includes(a.type));
-                
-                if (liquidAssets.length === 0) {
-                     // 自动贷款，不弹窗
-                    const borrowAmt = Math.ceil(debt / 1000) * 1000;
-                    this.manageLoan(borrowAmt);
-                    this.log(`⚠️ 自动借贷 $${borrowAmt} 以填补赤字`, true);
-                    return; // 刷新状态后，用户需再点击一次掷骰子，或者你可以直接在此处继续执行
-                } else {
-                    alert("⚠️ 现金赤字！\n请点击顶部【资产 & 负债】按钮：\n1. 变卖资产\n2. 或申请银行借款\n\n直到手头现金 >= 0 方可继续。");
-                    this.toggleSheet();
-                    return;
-                }
+                const borrowAmt = Math.ceil(debt / 1000) * 1000;
+                this.manageLoan(borrowAmt);
+                this.log(`⚠️ 现金不足，自动贷款 $${borrowAmt.toLocaleString()}`);
+                this.updateUI();
+                return; // 刷新UI后等待用户再次点击骰子
             }
+            // ------------------
 
             if (this.state.charityTurns > 0) {
                 this.state.charityTurns--;
@@ -946,7 +910,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             this.updateUI(); 
             
             let stepsRemaining = dice;
-            // 区分地图数据
             const tiles = this.state.isFastTrack ? CONFIG.fastTrackTiles : CONFIG.tiles;
             let lastTime = 0;
 
@@ -955,7 +918,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 if (!lastTime) lastTime = timestamp;
                 const elapsed = timestamp - lastTime;
 
-                // 动画速度：快车道稍微快一点
                 const speed = this.state.isFastTrack ? 120 : 180;
 
                 if (elapsed > speed) { 
@@ -969,9 +931,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     this.updatePlayerToken(this.state.pos, (this.state.pos + 1) % tiles.length);
                     this.state.pos = (this.state.pos + 1) % tiles.length;
 
-                    // 经过 Pay Check
                     if (stepsRemaining > 1) { 
-                        // 快车道 FT_Pay 也要经过领钱
                         if (tiles[this.state.pos].type === 'Pay' || tiles[this.state.pos].type === 'FT_Pay') {
                             this.payDay();
                         }
@@ -1014,7 +974,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             this.log(`💰 结算日：现金 +$${flow.toLocaleString()}`);
             this.animChange('display-cash', 'positive');
             
-            this.checkWinCondition(); // 检查是否晋级或胜利
+            this.checkWinCondition(); 
 
             if (!this.state.isFastTrack && this.state.cash < 0) {
                 this.checkBankruptcy();
@@ -1027,7 +987,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             if (this.state.cash < 0 || this.monthlyFlow < 0) {
                 this.log(`⚠️ 财务警报：现金或月现金流为负，请借贷或变卖资产`, true);
                 
-                // 自动打开资产负债表，方便操作
                 if (document.getElementById('sheet-modal').classList.contains('hidden')) {
                     setTimeout(() => this.toggleSheet(), 600);
                 }
@@ -1037,7 +996,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         triggerTile(tile) {
             if (this.state.isGameOver && !this.state.isFastTrack) return;
             
-            // 分流：快车道 vs 老鼠赛跑
             if (this.state.isFastTrack) {
                 this.handleFastTrackTile(tile);
             } else {
@@ -1075,7 +1033,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }
         },
 
-        // 快车道事件处理
         handleFastTrackTile(tile) {
             switch(tile.type) {
                 case 'FT_Pay':
@@ -1083,14 +1040,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     break;
 
                 case 'FT_Biz':
-                    // 如果这个格子已经投资过了，只提示
                     if (this.state.fastTrackBiz[this.state.pos]) {
                         const deal = this.state.fastTrackBiz[this.state.pos];
                         this.log(`🏢 已拥有：${deal.name} (+$${deal.flow.toLocaleString()}/月)`);
                         break;
                     }
-
-                    // 没投资过，抽一张新机会
                     const deal = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
                     const flow = deal.flow + (Math.floor(Math.random()*5)*1000);
                     const cost = deal.cost + (Math.floor(Math.random()*5)*10000);
@@ -1104,14 +1058,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         desc: deal.desc,
                         icon: deal.icon
                     });
-                    // 临时记住这个格子位置，等购买成功后再正式保存
                     this.state.currentCard.tempPos = this.state.pos;
                     break;
                 case 'FT_Dream':
-                    // 逻辑修改：只有是自己的梦想才能购买
                     // 30% 几率刷出玩家自己的梦想
                     const isMyDream = (Math.random() > 0.7); 
-                    // 如果随机到了自己的梦想，或者是该格子的固定配置（如有），则显示购买
                     
                     const targetDream = isMyDream ? this.state.userDream : CONFIG.dreams[Math.floor(Math.random() * CONFIG.dreams.length)];
                     const isTargetMyDream = targetDream.id === this.state.userDream.id;
@@ -1135,7 +1086,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                             }
                         });
                     } else {
-                        // 别人的梦想：只显示信息，强制类型为 INFO_ONLY，触发弹窗隐藏购买按钮
+                        // 别人的梦想：设为 INFO_ONLY，并在 showCardModal 中隐藏购买按钮
                         this.queueEvent({
                             type: 'INFO_ONLY',
                             data: {
@@ -1144,7 +1095,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                                 icon: targetDream.icon
                             }
                         });
-                    }                    
+                    }
                     this.processQueue();
                     break;
                 case 'FT_Charity':
@@ -1197,7 +1148,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
         manageLoan(amount) {
             if (!amount) return;
-            if (this.state.isFastTrack) return; // 快车道不能贷款（简化规则）
+            if (this.state.isFastTrack) return; 
 
             if (amount > 0) {
                 this.state.loan += amount;
@@ -1285,7 +1236,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             if (assetIdx === -1) return;
             const asset = this.state.assets[assetIdx];
 
-            if (this.state.isFastTrack) return; // 快车道资产一般不卖
+            if (this.state.isFastTrack) return; 
 
             if (asset.type === 'Stock' || asset.type === 'Option') {
                 const recoup = Math.floor((asset.cost * asset.quantity) / 2);
@@ -1319,8 +1270,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         },
 
         processQueue() {
-            // 如果已经胜利了，就不再处理队列，除非是胜利弹窗
-            // 这里简单放行
             if (this.state.eventQueue.length === 0) return;
             
             const overlay = document.getElementById('modal-overlay');
@@ -1336,7 +1285,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         },
 
         handleMarket(card) {
-            // 老鼠赛跑市场逻辑
             if (card.type === 'Buyer') {
                 const assets = this.state.assets.filter(a => a.name === card.target);
                 if (assets.length > 0) {
@@ -1419,7 +1367,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             
             this.openOverlay('card-modal');
             
-            // 显示当前银行贷款总额
             document.getElementById('modal-cash-display').innerText = '-' + this.state.loan.toLocaleString();
 
             const title = document.getElementById('card-title');
@@ -1446,16 +1393,16 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             btnAction.classList.remove('hidden');
             btnCancel.classList.remove('hidden'); 
 
-            // 如果是只显示信息（别人的梦想），隐藏确认按钮，并让关闭按钮变宽
+            // 如果是 INFO_ONLY，严格隐藏操作按钮，并调整取消按钮样式
             if (type === 'INFO_ONLY') {
                 btnAction.classList.add('hidden');
-                btnShort.classList.add('hidden'); // 确保做空按钮也隐藏
+                btnShort.classList.add('hidden'); 
                 btnCancel.innerText = '关闭';
-                btnCancel.classList.remove('flex-1'); // 移除原有宽度限制
-                btnCancel.classList.add('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white'); // 增加醒目样式
+                btnCancel.classList.remove('flex-1');
+                btnCancel.classList.add('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white'); 
             } else {
                 btnAction.classList.remove('hidden');
-                btnCancel.classList.add('flex-1'); // 恢复默认
+                btnCancel.classList.add('flex-1'); 
                 btnCancel.classList.remove('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white');
             }
             
@@ -1546,22 +1493,19 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         } else { this.shakeModal(); return; }
                     }
                 } else {
-                    // 房产或企业
                     if (this.state.cash >= card.down) {
                         this.state.cash -= card.down;
                         this.state.assets.push({ ...card, id: uuid() });
                         this.state.passive += card.flow;
                         
-                        // 快车道特殊逻辑：现金流累加
                         if (this.state.isFastTrack) {
                             this.state.ftAddedCashflow += card.flow;
-                            this.state.salary += card.flow; // 快车道上salary视作现金流日收入基数
+                            this.state.salary += card.flow; 
                             this.log(`🚀 投资成功! 现金流 +$${card.flow.toLocaleString()}`);
                         } else {
                             this.log(`🏠 购入资产: +$${card.flow.toLocaleString()}/月`);
                         }
 
-                    // 快车道投资成功后，把项目保存到对应格子
                     if (this.state.isFastTrack && this.state.currentCard && this.state.currentCard.tempPos !== undefined) {
                         this.state.fastTrackBiz[this.state.currentCard.tempPos] = {
                             name: card.name,
@@ -1569,7 +1513,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                             flow: card.flow
                         };
                         delete this.state.currentCard.tempPos;
-                        this.renderBoard(); // 刷新棋盘显示
+                        this.renderBoard(); 
                     }
 
                     } else { this.shakeModal(); return; }
@@ -1597,7 +1541,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             this.checkWinCondition();
             this.updateUI();
             
-            // 只有游戏未结束才关闭弹窗，避免胜利弹窗被自动关闭
             if (!this.state.isGameOver) {
                 this.closeModal();
             }
@@ -1613,12 +1556,10 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             if (this.state.isGameOver) return; 
 
             if (this.state.isFastTrack) {
-                // 快车道胜利：新增现金流 > 50000
                 if (this.state.ftAddedCashflow >= 50000) {
                     this.winGame('CASHFLOW');
                 }
             } else {
-                // 老鼠赛跑晋级：被动收入 > 总支出
                 const totalExp = this.totalExpense;
                 if (this.state.passive > totalExp) {
                     this.enterFastTrack();
@@ -1713,20 +1654,17 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 if (this.state.assets.length === 0) {
                     container.innerHTML = '<div class="text-white/30 text-center py-24 text-xs">暂无资产</div>';
                 } else {
-                    // --- 修改开始：合并特定资产逻辑 ---
                     const mergeList = ['金币收藏', '优先股分红', '银行定期存单'];
                     const mergedCounts = {};
                 
-                    // 1. 先统计需要合并的资产
                     this.state.assets.forEach(asset => {
                         if (mergeList.includes(asset.name)) {
                             if (!mergedCounts[asset.name]) {
-                                // 初始化统计对象
                                 mergedCounts[asset.name] = { 
                                     ...asset, 
                                     count: 1, 
                                     totalFlow: asset.flow,
-                                    totalVal: asset.down // 用down字段暂存总价值/总成本
+                                    totalVal: asset.down 
                                 };
                         } else {
                             mergedCounts[asset.name].count++;
@@ -1736,7 +1674,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     }
                 });
 
-                    // 2. 渲染函数
                     const renderItem = (asset, isMerged = false) => {
                         const isStock = asset.type === 'Stock';
                         const badge = isStock ? 'Stock' : (isMerged ? 'Asset' : 'Biz/Real');
@@ -1745,7 +1682,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         let titleStr = asset.name;
 
                         if (isMerged) {
-                            // 合并显示的格式
                             titleStr = `${asset.name} <span class="text-yellow-400/80 text-xs ml-1">x${asset.count}</span>`;
                             valStr = `总值 $${asset.totalVal.toLocaleString()} · 流 $${asset.totalFlow}/月`;
                         } else if (isStock) {
@@ -1754,8 +1690,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                             valStr = `+$${asset.flow.toLocaleString()}/月`;
                         }
 
-                        // 只有非快车道且非合并显示的资产才显示单独卖出按钮（简化操作，合并资产建议去银行贷款处操作，这里为了UI整洁不放卖出）
-                        // 或者：如果想让合并资产也能卖，逻辑会比较复杂，这里暂时隐藏合并资产的卖出按钮
                         const actionBtn = (this.state.isFastTrack || isMerged) ? '' : `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 py-1 rounded active:bg-red-500/40">卖出</button>`;
 
                         const div = document.createElement('div');
@@ -1770,19 +1704,15 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         container.appendChild(div);
                     };
 
-                    // 3. 执行渲染
-                    // 先渲染不需要合并的（房产、股票等）
                     this.state.assets.forEach(asset => {
                         if (!mergeList.includes(asset.name)) {
                             renderItem(asset, false);
                         }
                     });
                 
-                    // 再渲染合并后的
                     Object.values(mergedCounts).forEach(item => {
                         renderItem(item, true);
                     });
-                    // --- 修改结束 ---
             } 
         } else if (tab === 'debt') {
                 const list = document.getElementById('liabilities-list');
@@ -1810,7 +1740,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         list.appendChild(div);
                     });
 
-             // 新增：宣布破产按钮（苹果风格红色大按钮）
              const bankruptcyBtn = document.createElement('div');
              bankruptcyBtn.className = 'mt-6';
              bankruptcyBtn.innerHTML = `
@@ -1824,7 +1753,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
              `;
              list.appendChild(bankruptcyBtn);
 
-             // 底部留白（可选，美观用）
              const empty = document.createElement('div');
              empty.className = 'h-10';
              list.appendChild(empty);
@@ -1861,7 +1789,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         updateUI() {
             document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
             document.getElementById('display-flow').innerText = '$' + this.monthlyFlow.toLocaleString();
-            // 在快车道模式下，被动收入显示为新增的快车道现金流
             const displayPassive = this.state.isFastTrack ? this.state.ftAddedCashflow : this.state.passive;
             document.getElementById('display-passive').innerText = '$' + displayPassive.toLocaleString();
             
@@ -1870,7 +1797,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             
             let percent = 0;
             if (this.state.isFastTrack) {
-                // 快车道进度条：目标是 +50000 现金流
                 percent = Math.min((this.state.ftAddedCashflow / 50000) * 100, 100);
             } else {
                 percent = totalExp > 0 ? Math.min((this.state.passive / totalExp) * 100, 100) : 100;
@@ -1889,20 +1815,17 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             
             const tiles = this.state.isFastTrack ? CONFIG.fastTrackTiles : CONFIG.tiles;
             
-            // 保持4列布局
             board.style.gridTemplateColumns = "repeat(4, 1fr)";
             
             tiles.forEach((tile, idx) => {
                 const div = document.createElement('div');
                 let extraClass = '';
                 if (this.state.isFastTrack) {
-                    // 修改：移除了 'h-14'，只保留字体缩小，让 CSS 的 aspect-ratio 控制正方形
                     extraClass = 'text-[9px]'; 
                 }
 
                 div.className = `tile ${tile.color} ${extraClass}`;
                 
-                // 如果是快车道梦想格，且是玩家选中的，高亮
                 if (this.state.isFastTrack && tile.type === 'FT_Dream') {
                     div.innerHTML = `<div class="tile-icon text-lg">${tile.icon}</div><div class="opacity-70 scale-75 origin-center tracking-tight text-[8px]">${tile.label}</div>`;
 
