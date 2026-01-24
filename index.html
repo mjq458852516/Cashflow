@@ -1393,6 +1393,8 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             btnAction.classList.remove('hidden');
             btnCancel.classList.remove('hidden'); 
 
+            btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
+            
             // 如果是 INFO_ONLY，严格隐藏操作按钮，并调整取消按钮样式
             if (type === 'INFO_ONLY') {
                 btnAction.classList.add('hidden');
@@ -1406,7 +1408,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 btnCancel.classList.remove('w-full', 'bg-slate-200', 'dark:bg-white/20', 'text-slate-900', 'dark:text-white');
             }
             
-            btnAction.className = "flex-[1.5] py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none tap-effect text-sm transition-colors";
 
             if (type === 'OPP') {
                 if (data.type === 'Stock') {
