@@ -24,6 +24,20 @@
     <style>
         .hidden { display: none !important; }
         
+                /* 新增：强制禁止所有元素被选中和长按弹出菜单 */
+        * {
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+        }
+        /* 允许输入框正常输入 */
+        input, textarea {
+            -webkit-user-select: auto !important;
+            user-select: auto !important;
+        }
+
         :root {
             --ios-bg: #F2F2F7;
             --ios-card: rgba(255, 255, 255, 0.85);
@@ -755,7 +769,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             setTimeout(() => this.log(`🎲 职业: ${job.name} (逃离老鼠赛跑)`), 1500);
         },
 
-        enterFastTrack() {
+                enterFastTrack() {
             this.state.isFastTrack = true;
             this.state.isGameOver = false;
             
@@ -773,6 +787,40 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             
             this.state.salary = oldPassive;
             this.state.passive = 0; 
+
+            // --- 新增代码开始：初始化快车道布局（固定每个格子的内容） ---
+            this.state.fastTrackSetup = {}; // 用于存储每个格子的固定内容
+            
+            // 1. 准备打乱的生意列表
+            let shuffledDeals = [...CONFIG.fastTrackDeals].sort(() => 0.5 - Math.random());
+            
+            // 2. 准备打乱的梦想列表（排除玩家自己的梦想）
+            let otherDreams = CONFIG.dreams.filter(d => d.id !== this.state.userDream.id).sort(() => 0.5 - Math.random());
+            
+            // 3. 确定哪一个格子是玩家的终极梦想（随机选一个FT_Dream格子）
+            let dreamIndices = [];
+            CONFIG.fastTrackTiles.forEach((t, i) => { if(t.type === 'FT_Dream') dreamIndices.push(i); });
+            const winningTileIndex = dreamIndices[Math.floor(Math.random() * dreamIndices.length)];
+
+            // 4. 遍历地图，给每个格子分配固定的内容
+            CONFIG.fastTrackTiles.forEach((tile, index) => {
+                if (tile.type === 'FT_Biz') {
+                    // 如果生意发完了，重新洗牌再发
+                    if (shuffledDeals.length === 0) shuffledDeals = [...CONFIG.fastTrackDeals].sort(() => 0.5 - Math.random());
+                    this.state.fastTrackSetup[index] = { ...shuffledDeals.pop() }; // 绑定生意
+                } 
+                else if (tile.type === 'FT_Dream') {
+                    if (index === winningTileIndex) {
+                        // 这是玩家的梦想
+                        this.state.fastTrackSetup[index] = { ...this.state.userDream, isWinner: true };
+                    } else {
+                        // 这是别人的梦想
+                        if (otherDreams.length === 0) otherDreams = CONFIG.dreams.filter(d => d.id !== this.state.userDream.id).sort(() => 0.5 - Math.random());
+                        this.state.fastTrackSetup[index] = { ...otherDreams.pop(), isWinner: false };
+                    }
+                }
+            });
+            // --- 新增代码结束 ---
 
             this.renderBoard();
             this.updateUI();
@@ -796,6 +844,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             btn.innerText = "开始飙车";
             btn.onclick = () => this.closeModal();
         },
+
 
         get liabilitiesExpense() { return this.state.liabilities.reduce((sum, item) => sum + item.expense, 0); },
         get childExpense() { return this.state.childCount * this.state.perBabyCost; },
@@ -1033,51 +1082,59 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }
         },
 
-        handleFastTrackTile(tile) {
+                handleFastTrackTile(tile) {
+            // 获取当前格子预先分配好的数据
+            const fixedData = this.state.fastTrackSetup ? this.state.fastTrackSetup[this.state.pos] : null;
+
             switch(tile.type) {
                 case 'FT_Pay':
                     this.payDay();
                     break;
 
                 case 'FT_Biz':
+                    // 1. 检查是否已经买过这个格子的生意
                     if (this.state.fastTrackBiz[this.state.pos]) {
                         const deal = this.state.fastTrackBiz[this.state.pos];
                         this.log(`🏢 已拥有：${deal.name} (+$${deal.flow.toLocaleString()}/月)`);
-                        break;
+                        return; // 如果已买过，直接结束，不弹出窗口
                     }
-                    const deal = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
-                    const flow = deal.flow + (Math.floor(Math.random()*5)*1000);
-                    const cost = deal.cost + (Math.floor(Math.random()*5)*10000);
                     
-                    this.showCardModal('OPP', {
-                        name: deal.name,
-                        type: 'Business',
-                        cost: cost,
-                        down: cost, 
-                        flow: flow,
-                        desc: deal.desc,
-                        icon: deal.icon
-                    });
-                    this.state.currentCard.tempPos = this.state.pos;
+                    // 2. 如果没买过，读取固定的生意数据
+                    if (fixedData) {
+                        // 稍微给现金流和成本加一点随机浮动（可选，保留原游戏趣味性），也可以直接用 fixedData.flow
+                        // 这里我们使用固定数据，确保每次踩到一样
+                        const flow = fixedData.flow;
+                        const cost = fixedData.cost;
+                        
+                        this.showCardModal('OPP', {
+                            name: fixedData.name,
+                            type: 'Business',
+                            cost: cost,
+                            down: cost, 
+                            flow: flow,
+                            desc: fixedData.desc,
+                            icon: fixedData.icon
+                        });
+                        // 记录当前位置，以便购买后标记为“已拥有”
+                        this.state.currentCard.tempPos = this.state.pos;
+                    }
                     break;
-                case 'FT_Dream':
-                    // 30% 几率刷出玩家自己的梦想
-                    const isMyDream = (Math.random() > 0.7); 
-                    
-                    const targetDream = isMyDream ? this.state.userDream : CONFIG.dreams[Math.floor(Math.random() * CONFIG.dreams.length)];
-                    const isTargetMyDream = targetDream.id === this.state.userDream.id;
 
-                    if (isTargetMyDream) {
+                case 'FT_Dream':
+                    if (!fixedData) return;
+
+                    // 判断是否是玩家自己的梦想
+                    if (fixedData.isWinner) {
                         this.queueEvent({
                             type: 'INFO_DECISION',
                             data: {
-                                name: `你的梦想: ${targetDream.name}`,
-                                desc: `💖 <b>这是你梦寐以求的！</b><br>支付 $${targetDream.cost.toLocaleString()} 购买并<b>赢得游戏</b>！`,
-                                icon: targetDream.icon,
-                                cost: targetDream.cost,
+                                name: `你的梦想: ${fixedData.name}`,
+                                desc: `💖 <b>这是你梦寐以求的！</b><br>支付 $${fixedData.cost.toLocaleString()} 购买并<b>赢得游戏</b>！`,
+                                icon: fixedData.icon,
+                                cost: fixedData.cost,
                                 onConfirm: () => {
-                                    if (this.state.cash >= targetDream.cost) {
-                                        this.state.cash -= targetDream.cost;
+                                    if (this.state.cash >= fixedData.cost) {
+                                        this.state.cash -= fixedData.cost;
                                         this.winGame('DREAM');
                                     } else {
                                         this.log('现金不足', true);
@@ -1086,21 +1143,23 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                             }
                         });
                     } else {
-                        // 别人的梦想：设为 INFO_ONLY，并在 showCardModal 中隐藏购买按钮
+                        // 别人的梦想
                         this.queueEvent({
                             type: 'INFO_ONLY',
                             data: {
-                                name: `别人的梦想: ${targetDream.name}`,
-                                desc: `这是别人的梦想，你只能看看。<br>成本: $${targetDream.cost.toLocaleString()}<br><span class="text-xs text-slate-400">(你只能购买自己选定的梦想)</span>`,
-                                icon: targetDream.icon
+                                name: `别人的梦想: ${fixedData.name}`,
+                                desc: `这是别人的梦想，你只能看看。<br>成本: $${fixedData.cost.toLocaleString()}<br><span class="text-xs text-slate-400">(你只能购买自己选定的梦想)</span>`,
+                                icon: fixedData.icon
                             }
                         });
                     }
                     this.processQueue();
                     break;
+
                 case 'FT_Charity':
                     this.triggerCharity();
                     break;
+
                 case 'FT_Hazard':
                     if (tile.effect === 'audit') {
                         this.log('👮 税务审计！失去一半现金。', true);
@@ -1117,6 +1176,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     break;
             }
         },
+
 
         triggerCharity() {
             const cost = Math.floor(this.totalIncome * 0.1);
