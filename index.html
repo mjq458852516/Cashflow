@@ -447,7 +447,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         ],
         professions: [
             {
-                name: '保安', icon: '🧹', salary: 1600, savings: 1600, perChild: 70,
+                name: '保安', icon: '🧹', salary: 1600, savings: 1210, perChild: 70,
                 debts: { mortgage: 20000, car: 4000, credit: 2000, retail: 1000, loan: 0 },
                 expenses: { tax: 280, mortgage: 200, car: 60, credit: 60, retail: 50, loan: 0, other: 300 }
             },
@@ -457,7 +457,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 expenses: { tax: 460, mortgage: 400, car: 80, credit: 60, retail: 50, loan: 0, other: 570 }
             },
             {
-                name: '机械师', icon: '🔧', salary: 2000, savings: 2000, perChild: 110,
+                name: '机械师', icon: '🔧', salary: 2000, savings: 1390, perChild: 110,
                 debts: { mortgage: 31000, car: 3000, credit: 2000, retail: 1000, loan: 0 },
                 expenses: { tax: 360, mortgage: 300, car: 60, credit: 60, retail: 50, loan: 0, other: 450 }
             },
@@ -627,20 +627,31 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { type: 'Buyer', target: '软件公司 IPO', price: 250000, desc: '上市大获成功！你的原始股价值飙升至 $250,000！' }
         ],
         doodads: [
-            { name: '周末度假', cost: 2000, icon: '🏖️' },
-            { name: '购物狂欢', cost: 3000, icon: '🛍️' },
-            { name: '购买大屏电视', cost: 3500, icon: '📺' },
-            { name: '新音响系统', cost: 1200, icon: '🔊' },
-            { name: '新高尔夫球具', cost: 1500, icon: '⛳️' },
-            { name: '珠宝首饰', cost: 5000, icon: '💎' },
-            { name: '豪华晚餐', cost: 400, icon: '🍽️' },
-            { name: '新衣服套装', cost: 800, icon: '👔' },
-            { name: '船只维修', cost: 6000, icon: '🛥️' },
-            { name: '家庭娱乐系统', cost: 2500, icon: '🎮' },
-            { name: '购买新家具', cost: 4000, icon: '🛋️' },
-            { name: '汽车大修', cost: 1500, icon: '🔧' },
-            { name: '奢侈手表', cost: 8000, icon: '⌚' },
-            { name: '游艇保养', cost: 12000, icon: '⚓' }
+            { name: '热水器漏水', cost: 450, icon: '🚿' },
+            { name: '学习新技能', cost: 220, icon: '📚' },
+            { name: '买了新保龄球', cost: 80, icon: '🎳' },
+            { name: '生日派对', cost: 100, icon: '🎂' },
+            { name: '买立体声话筒', cost: 100, icon: '🎤' },
+            { name: '无法抗拒艺术家的油画', cost: 200, icon: '🖼️' },
+            { name: '同学聚会', cost: 250, icon: '🥳' },
+            { name: '和朋友吃饭', cost: 40, icon: '🍽️' },
+            { name: '买礼物给孩子', cost: 50, icon: '🎁' },
+            { name: '买新墨镜', cost: 80, icon: '🕶️' },
+            { name: '车停在禁停区', cost: 100, icon: '🚫' },
+            { name: '购买新家具', cost: 300, icon: '🛋️' },
+            { name: '买彩票', cost: 100, icon: '📰' },
+            { name: '看牙科', cost: 100, icon: '🦷' },
+            { name: '买新手机', cost: 100, icon: '📱' },
+            { name: '税务审计--老天啊！', cost: 100, icon: '👮' },
+            { name: '看咖啡机', cost: 150, icon: '☕' },
+            { name: '买厨具', cost: 150, icon: '🧑‍🍳' },
+            { name: '去赌场', cost: 200, icon: '🤑' },
+            { name: '汽车需要新轮胎', cost: 300, icon: '🛞' },
+            { name: '购物', cost: 350, icon: '🛍️' },
+            { name: '汽车空调坏了', cost: 700, icon: '🚙' },
+            { name: '儿子的大学学费', cost: 1500, icon: '🎓' },
+            { name: '家庭度假', cost: 2000, icon: '🏖️' },
+            { name: '新游艇', cost: 17000, icon: '⚓' }
         ],
     };
 
