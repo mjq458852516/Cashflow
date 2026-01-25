@@ -177,12 +177,15 @@
         .tile-charity { background: #FFEDD5; color: #c2410c; }
         .tile-down { background: #F3E8FF; color: #7e22ce; }
 
-        .player-token {
-            position: absolute; width: 14px; height: 14px; background: var(--ios-blue);
+                .player-token, .ai-token {
+            position: absolute; width: 14px; height: 14px;
             border: 2px solid white; border-radius: 50%; top: -4px; right: -4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 20;
             transition: all 0.2s ease;
         }
+        .player-token { background: var(--ios-blue); z-index: 30; }
+        .ai-token { background: #FF3B30; right: auto; left: -4px; z-index: 20; } /* AI是红色的，位置稍微错开 */
+
 
         .ios-segment { background: rgba(118, 118, 128, 0.24); border-radius: 9px; padding: 2px; display: flex; }
         .segment-btn {
@@ -643,12 +646,16 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
     let uiTimer = null; 
 
-    const game = {
+        const game = {
         state: {
             isGameOver: false,
+            isAiTurn: false, 
+            // 给 AI 增加头像、被动收入和支出数据，防止面板显示出错
+            ai: { pos: 0, cash: 2000, flow: 0, passive: 0, expense: 1500, name: '阿尔法狗', avatar: '🤖' }, 
             isFastTrack: false, 
+ 
             userDream: null,    
-            ftAddedCashflow: 0, 
+            ftAddedCashflow: 0,  
             
             cash: 0,
             loan: 0,
@@ -758,6 +765,35 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 }
             }
 
+            // --- 新增：给 AI 分配职业 ---
+            // 1. 随机选一个职业（为了有趣，尽量和玩家不一样）
+            let aiJob = CONFIG.professions[Math.floor(Math.random() * CONFIG.professions.length)];
+            while (aiJob.name === job.name && CONFIG.professions.length > 1) {
+                aiJob = CONFIG.professions[Math.floor(Math.random() * CONFIG.professions.length)];
+            }
+
+            // 2. 计算 AI 的初始总支出 (所有 expenses 加起来)
+            const aiTotalExpense = Object.values(aiJob.expenses).reduce((a, b) => a + b, 0);
+
+            // 3. 写入 AI 完整档案
+            this.state.ai = {
+                pos: 0,
+                name: `AI ${aiJob.name}`, // 名字变成 "AI 医生"、"AI 司机" 等
+                avatar: '🤖',
+                jobTitle: aiJob.name,
+                
+                cash: aiJob.savings,     // 初始储蓄
+                salary: aiJob.salary,    // 职业工资
+                passive: 0,              // 初始被动收入
+                expense: aiTotalExpense, // 职业总支出
+                
+                // 计算初始月现金流 = 工资 - 总支出
+                flow: aiJob.salary - aiTotalExpense
+            };
+            
+            this.log(`🤖 AI 加入了游戏，职业是：${aiJob.name}`, true);
+            // -------------------------
+
             this.renderBoard(); 
             this.updateUI();
             
@@ -864,7 +900,16 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 container.innerHTML = ''; return;
             }
             container.innerHTML = '';
-
+            // --- 新增：如果轮到 AI，显示禁止按钮 ---
+            if (this.state.isAiTurn) {
+                container.innerHTML = `
+                    <button class="flex-1 bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-white/30 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 cursor-not-allowed shadow-none" disabled>
+                        <span class="animate-spin">⏳</span> AI 思考中...
+                    </button>
+                `;
+                return;
+            }
+            // ------------------------------------
             const disabledClass = this.isMoving ? "opacity-50 pointer-events-none" : "";
             const commonClass = `tap-effect flex-1 bg-[#1C1C1E] dark:bg-white dark:text-black text-white rounded-2xl font-bold text-lg shadow-xl shadow-slate-300 dark:shadow-none flex items-center justify-center gap-2 active:bg-black transition-all ${disabledClass}`;
 
@@ -915,6 +960,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
 
         rollDice(diceCount) {
             if (this.state.isGameOver && !this.state.isFastTrack) return;
+            if (this.state.isAiTurn) { this.log("⏳ 请等待对手行动结束"); return; } // 新增这一行
             if (this.isMoving) return;
             
             const overlay = document.getElementById('modal-overlay');
@@ -1049,8 +1095,12 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 this.handleFastTrackTile(tile);
             } else {
                 switch(tile.type) {
-                    case 'Pay': this.payDay(); break;
+                    case 'Pay': 
+                        this.payDay(); 
+                        setTimeout(() => this.runAiTurn(), 1000); // 结算完工资，1秒后 AI 行动
+                        break;
                     case 'Opp': this.openOverlay('choice-modal'); break;
+
                     case 'Doodad': 
                         const doodad = CONFIG.doodads[Math.floor(Math.random() * CONFIG.doodads.length)];
                         this.showCardModal('DOODAD', doodad); 
@@ -1059,7 +1109,10 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         const market = CONFIG.marketCards[Math.floor(Math.random() * CONFIG.marketCards.length)];
                         this.handleMarket(market);
                         break;
-                    case 'Charity': this.triggerCharity(); break;
+                    case 'Charity': 
+                        this.triggerCharity(); 
+                        // 注意：Charity 是弹窗，逻辑在 closeModal 处理，这里不用加
+                        break; 
                     case 'Baby':
                         if (this.state.childCount >= 3) {
                             this.log(`👶 孩子已达上限`);
@@ -1068,6 +1121,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                             this.log(`👶 喜得贵子 (支出 +$${this.state.perBabyCost}/月)`, true);
                         }
                         this.updateUI();
+                        setTimeout(() => this.runAiTurn(), 1000); // 生完孩子，AI 行动
                         break;
                     case 'Downsized':
                         const expense = this.totalExpense;
@@ -1650,6 +1704,93 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
          }
      },
 
+        // --- 新增：AI 核心逻辑 ---
+        runAiTurn() {
+            if (this.state.isGameOver) return;
+            this.state.isAiTurn = true;
+            this.updateUI(); 
+            
+            // 1. 模拟思考
+            this.log(`🤖 ${this.state.ai.name} 正在思考...`);
+            
+            setTimeout(() => {
+                // 2. 掷骰子与移动
+                const dice = Math.floor(Math.random() * 6) + 1;
+                const tiles = this.state.isFastTrack ? CONFIG.fastTrackTiles : CONFIG.tiles;
+                
+                this.state.ai.pos = (this.state.ai.pos + dice) % tiles.length;
+                this.renderBoard();
+                
+                const tile = tiles[this.state.ai.pos];
+                
+                // 3. AI 决策逻辑 (使用真实数据)
+                setTimeout(() => {
+                    let msg = '';
+
+                    // === 情况 A: 结算日 ===
+                    if (tile.type === 'Pay' || tile.type === 'FT_Pay') {
+                        // 领取真实的月现金流
+                        const income = this.state.ai.flow; 
+                        this.state.ai.cash += income;
+                        this.animChange('display-cash', 'positive'); // 触发数字跳动动画
+                        msg = `💰 AI 结算日：现金 +$${income.toLocaleString()}`;
+                    }
+                    
+                    // === 情况 B: 遇到机会 ===
+                    else if (tile.type === 'Opp' || tile.type === 'FT_Biz') {
+                        // 简单的 AI 投资策略：如果手头现金足够买，且还有 $500 剩余，就买
+                        const cost = Math.floor(Math.random() * 3000) + 500;
+                        const newFlow = Math.floor(cost * 0.2); // 假设 20% 回报率
+                        
+                        if (this.state.ai.cash >= (cost + 500)) {
+                            this.state.ai.cash -= cost;
+                            
+                            // 更新 AI 的财务报表
+                            this.state.ai.passive += newFlow;
+                            // 重新计算月现金流：(工资 + 被动) - 支出
+                            this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
+                            
+                            msg = `🏢 AI 购买了资产 (花费$${cost}, 流+$${newFlow})`;
+                        } else {
+                            msg = `👀 AI 资金紧张，放弃了投资机会`;
+                        }
+                    }
+                    
+                    // === 情况 C: 额外支出 ===
+                    else if (tile.type === 'Doodad') {
+                        const cost = Math.floor(Math.random() * 1000) + 200;
+                        if (this.state.ai.cash >= cost) {
+                            this.state.ai.cash -= cost;
+                            msg = `💸 AI 购买了奢侈品 -$${cost}`;
+                        } else {
+                            // AI 没钱支付 (简单处理：扣成负数或贷款)
+                            const loan = cost - this.state.ai.cash;
+                            this.state.ai.cash = 0;
+                            this.state.ai.expense += Math.floor(loan * 0.1); // 增加利息支出
+                            this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
+                            msg = `💸 AI 被迫贷款支付 -$${cost}`;
+                        }
+                    } 
+                    // === 其他情况 ===
+                    else {
+                        msg = `🎲 AI 停留在 ${tile.label}`;
+                    }
+
+                    this.log(msg, true);
+                    this.updateUI(); // 实时刷新面板数据
+                    
+                    // 4. 回合结束
+                    setTimeout(() => {
+                        this.state.isAiTurn = false;
+                        this.log(`🫵 轮到你了！`);
+                        this.updateUI();
+                    }, 1500);
+                    
+                }, 1000); 
+                
+            }, 1000);
+        },
+
         winGame(type) {
             this.state.isGameOver = true; 
             this.isMoving = false; 
@@ -1843,29 +1984,77 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 overlay.classList.add('hidden'); 
                 overlay.style.display = 'none';
                 overlay.classList.remove('opacity-0');
+                
+                // --- 修改开始 ---
+                // 如果当前不是 AI 的回合，且队列里没有事件了，说明玩家操作完了，该 AI 了
+                const wasPlayerTurn = !this.state.isAiTurn;
                 this.state.currentCard = null;
-                this.processQueue();
+                
+                // 先处理队列（比如连续弹窗）
+                if (this.state.eventQueue.length > 0) {
+                    this.processQueue();
+                } else if (wasPlayerTurn && !this.state.isGameOver) {
+                    // 只有当这是玩家主动关闭，且没有后续事件时，才触发 AI
+                    setTimeout(() => this.runAiTurn(), 500); 
+                }
+                // --- 修改结束 ---
+                
             }, 200);
         },
+
         updateUI() {
-            document.getElementById('display-cash').innerText = '$' + Math.floor(this.state.cash).toLocaleString();
-            document.getElementById('display-flow').innerText = '$' + this.monthlyFlow.toLocaleString();
-            const displayPassive = this.state.isFastTrack ? this.state.ftAddedCashflow : this.state.passive;
-            document.getElementById('display-passive').innerText = '$' + displayPassive.toLocaleString();
+            // 1. 判断当前是谁的回合
+            const isAi = this.state.isAiTurn;
+            const target = isAi ? this.state.ai : this.state;
             
-            const totalExp = this.totalExpense;
-            document.getElementById('display-expense').innerText = '$' + totalExp.toLocaleString();
+            // 2. 准备数据 (如果是 AI，我们需要做一些特殊计算适配)
+            const name = isAi ? target.name : this.state.jobTitle;
+            const avatar = isAi ? target.avatar : this.state.jobIcon;
             
+            const cash = target.cash;
+            // 玩家的月现金流是实时算的，AI 的我们直接存着
+            const flow = isAi ? target.flow : this.monthlyFlow; 
+            const passive = target.passive || 0;
+            
+            // 玩家支出是算的，AI 简化为一个固定值或累加值
+            const expense = isAi ? target.expense : this.totalExpense;
+
+            // 3. 更新顶部面板 DOM
+            document.getElementById('game-phase-text').innerText = name;
+            document.getElementById('game-phase-badge').innerText = avatar;
+            
+            // 增加视觉区分：如果是 AI 回合，给面板加个微弱的红色背景光晕，或者保持原样
+            const topPanel = document.getElementById('top-panel');
+            if (isAi) {
+                topPanel.classList.add('ring-2', 'ring-red-500', 'ring-opacity-50'); // 给个红圈提醒
+            } else {
+                topPanel.classList.remove('ring-2', 'ring-red-500', 'ring-opacity-50');
+            }
+
+            // 更新数字显示
+            this.animChange('display-cash', cash > 0 ? 'positive' : 'negative'); // 简单的动画触发
+            document.getElementById('display-cash').innerText = '$' + Math.floor(cash).toLocaleString();
+            document.getElementById('display-flow').innerText = '$' + flow.toLocaleString();
+            document.getElementById('display-passive').innerText = '$' + passive.toLocaleString();
+            document.getElementById('display-expense').innerText = '$' + expense.toLocaleString();
+
+            // 4. 更新进度条 (财务自由进度)
             let percent = 0;
             if (this.state.isFastTrack) {
-                percent = Math.min((this.state.ftAddedCashflow / 50000) * 100, 100);
+                const targetFlow = isAi ? target.flow : this.state.ftAddedCashflow;
+                percent = Math.min((targetFlow / 50000) * 100, 100);
             } else {
-                percent = totalExp > 0 ? Math.min((this.state.passive / totalExp) * 100, 100) : 100;
+                // 进度 = 被动收入 / 总支出
+                percent = expense > 0 ? Math.min((passive / expense) * 100, 100) : 100;
             }
             document.getElementById('progress-bar').style.width = percent + '%';
-
-            if (!this.state.isFastTrack && this.monthlyFlow < 0 && this.state.cash < 0) document.getElementById('bankrupt-warn').classList.remove('hidden');
-            else document.getElementById('bankrupt-warn').classList.add('hidden');
+            
+            // 如果是玩家且赤字，显示警告；AI 赤字我们就不弹警告了，免得干扰玩家
+            if (!isAi && !this.state.isFastTrack && flow < 0 && cash < 0) {
+                document.getElementById('bankrupt-warn').classList.remove('hidden');
+            } else {
+                document.getElementById('bankrupt-warn').classList.add('hidden');
+            }
 
             this.renderDiceControls();
         },
@@ -1905,11 +2094,20 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     div.innerHTML = `<div class="tile-icon">${tile.icon}</div><div class="opacity-70 scale-90 origin-center tracking-tight">${tile.label}</div>`;
                 }
                 
+                                // 渲染玩家
                 if (idx === this.state.pos) {
                     div.classList.add('active');
                     div.innerHTML += `<div class="player-token"></div>`;
-                    setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
+                    // 只有轮到玩家时才自动滚动，避免 AI 移动时屏幕乱跳
+                    if (!this.state.isAiTurn) {
+                        setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
+                    }
                 }
+                // 渲染 AI
+                if (idx === this.state.ai.pos) {
+                    div.innerHTML += `<div class="ai-token"></div>`;
+                }
+                
                 board.appendChild(div);
             });
         },
