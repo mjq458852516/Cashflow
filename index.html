@@ -1705,88 +1705,140 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
      },
 
         // --- 新增：AI 核心逻辑 ---
-        runAiTurn() {
+                runAiTurn() {
             if (this.state.isGameOver) return;
             this.state.isAiTurn = true;
-            this.updateUI(); 
+            this.updateUI();
             
-            // 1. 模拟思考
             this.log(`🤖 ${this.state.ai.name} 正在思考...`);
             
             setTimeout(() => {
-                // 2. 掷骰子与移动
+                // 1. 掷骰子
                 const dice = Math.floor(Math.random() * 6) + 1;
                 const tiles = this.state.isFastTrack ? CONFIG.fastTrackTiles : CONFIG.tiles;
                 
+                // 2. 移动
                 this.state.ai.pos = (this.state.ai.pos + dice) % tiles.length;
                 this.renderBoard();
                 
                 const tile = tiles[this.state.ai.pos];
                 
-                // 3. AI 决策逻辑 (使用真实数据)
+                // 3. 核心决策逻辑
                 setTimeout(() => {
                     let msg = '';
-
+                    
                     // === 情况 A: 结算日 ===
                     if (tile.type === 'Pay' || tile.type === 'FT_Pay') {
-                        // 领取真实的月现金流
-                        const income = this.state.ai.flow; 
+                        const income = this.state.ai.flow;
                         this.state.ai.cash += income;
-                        this.animChange('display-cash', 'positive'); // 触发数字跳动动画
+                        this.animChange('display-cash', 'positive');
                         msg = `💰 AI 结算日：现金 +$${income.toLocaleString()}`;
                     }
                     
-                    // === 情况 B: 遇到机会 ===
+                    // === 情况 B: 机会 (投资) ===
                     else if (tile.type === 'Opp' || tile.type === 'FT_Biz') {
-                        // 简单的 AI 投资策略：如果手头现金足够买，且还有 $500 剩余，就买
-                        const cost = Math.floor(Math.random() * 3000) + 500;
-                        const newFlow = Math.floor(cost * 0.2); // 假设 20% 回报率
+                        let card = null;
                         
-                        if (this.state.ai.cash >= (cost + 500)) {
-                            this.state.ai.cash -= cost;
-                            
-                            // 更新 AI 的财务报表
-                            this.state.ai.passive += newFlow;
-                            // 重新计算月现金流：(工资 + 被动) - 支出
-                            this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
-                            
-                            msg = `🏢 AI 购买了资产 (花费$${cost}, 流+$${newFlow})`;
+                        if (this.state.isFastTrack) {
+                            // 快车道：随机抽取一个快车道项目
+                            // 这里我们简单随机生成索引，为了更真实应该从 CONFIG.fastTrackDeals 读取
+                            // 但由于快车道逻辑是固定的，我们沿用之前的随机索引逻辑，或者直接随机抽一个
+                             card = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
                         } else {
-                            msg = `👀 AI 资金紧张，放弃了投资机会`;
+                            // 慢车道：根据 AI 现金决定看大生意还是小生意
+                            // AI 现金 > 6000 且有机会买大生意时，优先看大生意
+                            const canAffordBig = this.state.ai.cash > 6000;
+                            // 70% 概率符合常理，30% 概率随机，模拟不同性格
+                            const wantBig = canAffordBig ? (Math.random() > 0.3) : false;
+                            
+                            const deck = wantBig ? CONFIG.bigDeals : CONFIG.smallDeals;
+                            // **关键修改**：从真实配置中随机抽取一张卡
+                            const rawCard = deck[Math.floor(Math.random() * deck.length)];
+                            card = { ...rawCard }; // 复制卡片数据
+                        }
+
+                        // 分析卡片数据
+                        // 对于房产/企业，花费是 down (首付)；对于股票，花费是 cost * 数量
+                        // 简化 AI：遇到股票如果不便宜就不买，或者买一手；遇到资产看首付
+                        
+                        let costToPay = 0;
+                        let flowToGet = 0;
+                        let dealName = card.name;
+                        
+                        if (card.type === 'Stock') {
+                            // AI 策略：如果是股票，随机买 100 到 500 股
+                            const qty = (Math.floor(Math.random() * 5) + 1) * 100;
+                            costToPay = card.cost * qty;
+                            flowToGet = 0; // 股票通常没有月现金流（除了优先股，但在配置里优先股是 Asset）
+                            dealName = `${card.symbol} (${qty}股)`;
+                        } else {
+                            // 房产或企业
+                            costToPay = card.down || card.cost; // 优先用首付，没有首付则全款
+                            flowToGet = card.flow || 0;
+                        }
+
+                        // AI 购买决策：买得起就买
+                        if (this.state.ai.cash >= costToPay) {
+                            this.state.ai.cash -= costToPay;
+                            
+                            // 只有非股票类资产才增加现金流
+                            if (card.type !== 'Stock') {
+                                this.state.ai.passive += flowToGet;
+                                this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
+                            }
+                            
+                            msg = `🏢 AI 投资了 ${dealName}<br><span class="text-xs opacity-70">花费 $${costToPay.toLocaleString()} · 流 +$${flowToGet}</span>`;
+                        } else {
+                            msg = `👀 AI 看了看 ${dealName}，但买不起`;
                         }
                     }
                     
-                    // === 情况 C: 额外支出 ===
+                    // === 情况 C: 额外支出 (Doodad) ===
                     else if (tile.type === 'Doodad') {
-                        const cost = Math.floor(Math.random() * 1000) + 200;
+                        // **关键修改**：从真实 Doodad 库中抽取
+                        const doodad = CONFIG.doodads[Math.floor(Math.random() * CONFIG.doodads.length)];
+                        const cost = doodad.cost;
+                        
                         if (this.state.ai.cash >= cost) {
                             this.state.ai.cash -= cost;
-                            msg = `💸 AI 购买了奢侈品 -$${cost}`;
+                            msg = `💸 AI 遭遇支出：${doodad.name} (-$${cost.toLocaleString()})`;
                         } else {
-                            // AI 没钱支付 (简单处理：扣成负数或贷款)
+                            // 没钱支付，借贷处理
                             const loan = cost - this.state.ai.cash;
                             this.state.ai.cash = 0;
-                            this.state.ai.expense += Math.floor(loan * 0.1); // 增加利息支出
+                            const loanPayment = Math.ceil(loan/1000) * 100; // 这里的利息算法简化一下
+                            this.state.ai.expense += loanPayment;
                             this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
-                            msg = `💸 AI 被迫贷款支付 -$${cost}`;
+                            msg = `💸 AI 贷款支付了 ${doodad.name}`;
                         }
-                    } 
-                    // === 其他情况 ===
+                    }
+                    
+                    // === 情况 D: 市场/生孩子/慈善/失业 ===
+                    else if (tile.type === 'Market') {
+                        // 简化 AI 对市场的反应
+                        msg = `📈 AI 正在观察市场行情`;
+                    }
+                    else if (tile.type === 'Baby') {
+                         // AI 生孩子逻辑
+                         const childCost = CONFIG.professions.find(p => p.name === this.state.ai.jobTitle)?.perChild || 100;
+                         this.state.ai.expense += childCost;
+                         this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
+                         msg = `👶 AI 喜得贵子 (支出 +$${childCost})`;
+                    }
                     else {
                         msg = `🎲 AI 停留在 ${tile.label}`;
                     }
 
                     this.log(msg, true);
-                    this.updateUI(); // 实时刷新面板数据
+                    this.updateUI(); 
                     
-                    // 4. 回合结束
                     setTimeout(() => {
                         this.state.isAiTurn = false;
                         this.log(`🫵 轮到你了！`);
                         this.updateUI();
                     }, 1500);
                     
-                }, 1000); 
+                }, 1000);
                 
             }, 1000);
         },
