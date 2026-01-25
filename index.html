@@ -521,8 +521,8 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { type: 'Market', label: '市场', color: 'tile-market', icon: '📉' },
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
             { type: 'Doodad', label: '额外支出', color: 'tile-doodad', icon: '💸' },
-            { type: 'Downsized', label: '失业', color: 'tile-down', icon: '🛋️' },
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
+            { type: 'Downsized', label: '失业', color: 'tile-down', icon: '🛋️' },
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
             { type: 'Pay', label: '结算日', color: 'tile-pay', icon: '💰' },
             { type: 'Opp', label: '机会', color: 'tile-opp', icon: '⚡️' },
@@ -983,8 +983,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 this.state.downsizedTurns--;
                 this.log(`🛋️ 停赛中... 还剩 ${this.state.downsizedTurns} 轮`);
                 this.updateUI();
+                // 关键修改：玩家停赛，直接触发 AI 回合，不需要玩家再点一次
+                setTimeout(() => this.runAiTurn(), 800);
                 return;
             }
+
 
             // --- 自动贷款逻辑 ---
             if (this.state.cash < 0) {
@@ -993,7 +996,6 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 this.manageLoan(borrowAmt);
                 this.log(`⚠️ 现金不足，自动贷款 $${borrowAmt.toLocaleString()}`);
                 this.updateUI();
-                return; // 刷新UI后等待用户再次点击骰子
             }
             // ------------------
 
@@ -1410,40 +1412,49 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         },
 
         handleMarket(card) {
+            // 逻辑优化：如果是有人买房/企业
             if (card.type === 'Buyer') {
-                const assets = this.state.assets.filter(a => a.name === card.target);
-                if (assets.length > 0) {
-                    assets.forEach(asset => {
+                // 1. 找到所有符合条件的资产
+                const matchingAssets = this.state.assets.filter(a => a.name === card.target);
+                
+                if (matchingAssets.length > 0) {
+                    // 2. 生成一个列表 HTML，让用户在同一个弹窗里选择卖哪个
+                    let htmlList = `<div class="space-y-2 mt-4 max-h-[200px] overflow-y-auto">`;
+                    
+                    matchingAssets.forEach(asset => {
                         const loan = asset.cost - asset.down;
                         const netCash = card.price - loan;
-                        let actionName = `出售: ${card.target}`;
-                        let icon = '🤝';
-                        if (asset.type === 'Business') { actionName = '企业退出/IPO'; icon = '🏢'; }
-                        if (asset.type === 'Asset') { actionName = '资产变现'; icon = '💰'; }
+                        // 利用 onclick 直接调用我们刚才写的新函数
+                        htmlList += `
+                            <button onclick="game.sellAssetDirect('${asset.id}', ${card.price})" 
+                                class="w-full flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl active:bg-green-100 transition-colors">
+                                <div class="text-left">
+                                    <div class="font-bold text-slate-700 dark:text-green-100">${asset.name}</div>
+                                    <div class="text-[10px] text-slate-500 dark:text-green-200/70">买入成本: $${asset.cost.toLocaleString()}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs font-bold text-green-600 dark:text-green-400">净赚: $${netCash.toLocaleString()}</div>
+                                    <div class="text-[10px] text-red-400">需还贷: $${loan.toLocaleString()}</div>
+                                </div>
+                            </button>
+                        `;
+                    });
+                    htmlList += `</div>`;
 
-                        this.queueEvent({
-                            type: 'MARKET_SELL',
-                            data: {
-                                id: uuid(), 
-                                name: actionName, 
-                                desc: `${card.desc}<br><br>
-                                        <div class="text-xs bg-slate-100 dark:bg-white/10 p-2 rounded">
-                                        卖出价: <b>$${card.price.toLocaleString()}</b><br>
-                                        偿还贷款: -$${loan.toLocaleString()}<br>
-                                        <div class="border-t border-slate-300 dark:border-white/20 my-1"></div>
-                                        净得现金: <b class="text-green-600">$${netCash.toLocaleString()}</b>
-                                        </div>`,
-                                icon: icon, 
-                                sellPrice: card.price, 
-                                targetAssetId: asset.id, 
-                                roi: netCash 
-                            }
-                        });
+                    // 3. 弹出一个单一的窗口
+                    this.queueEvent({
+                        type: 'INFO_ONLY', // 使用纯信息模式，因为操作按钮在 htmlList 里
+                        data: {
+                            name: `市场收购: ${card.target}`,
+                            desc: `${card.desc}<br><div class="text-xs text-slate-400 mt-2">点击下方列表中的资产即可卖出：</div>${htmlList}`,
+                            icon: '🤝'
+                        }
                     });
                 } else {
-                        this.log(`📰 市场: ${card.desc}`);
+                    this.log(`📰 市场: ${card.desc} (你没有此资产)`);
                 }
             } 
+            // 股票逻辑保持不变，因为股票是同质化的，不需要选择卖哪一张
             else if (card.type === 'PriceChange') {
                 const stocks = this.state.assets.filter(a => a.symbol === card.symbol && a.type === 'Stock');
                 if (stocks.length > 0) {
@@ -1474,11 +1485,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         }
                     });
                 } else {
-                        this.log(`📰 市场: ${card.symbol} 现价 $${card.price}`);
+                    this.log(`📰 市场: ${card.symbol} 现价 $${card.price}`);
                 }
             }
             else if (card.type === 'Inflation') {
-                    this.log(`📰 市场: ${card.desc}`);
+                this.log(`📰 市场: ${card.desc}`);
             }
             this.processQueue();
         },
@@ -1678,6 +1689,28 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             setTimeout(() => m.classList.remove('shake-anim'), 400);
         },
 
+        // 新增：直接卖出指定资产的函数（用于合并后的市场弹窗）
+        sellAssetDirect(assetId, price) {
+            const idx = this.state.assets.findIndex(a => a.id === assetId);
+            if (idx > -1) {
+                const asset = this.state.assets[idx];
+                const loan = asset.cost - asset.down;
+                const netCash = price - loan;
+                
+                this.state.cash += netCash;
+                if (asset.flow) this.state.passive -= asset.flow;
+                this.state.assets.splice(idx, 1);
+                
+                this.log(`💰 成功以 $${price.toLocaleString()} 卖出 ${asset.name}`);
+                this.checkWinCondition();
+                this.updateUI();
+                this.renderSheet('paper');
+                
+                // 卖出一个后，关闭弹窗。如果想支持连续卖，可以重新触发handleMarket检测，这里简单处理直接关闭
+                this.closeModal();
+            }
+        },
+
         checkWinCondition() {
             if (this.state.isGameOver) return; 
 
@@ -1751,56 +1784,66 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         let card = null;
                         
                         if (this.state.isFastTrack) {
-                            // 快车道：随机抽取一个快车道项目
-                            // 这里我们简单随机生成索引，为了更真实应该从 CONFIG.fastTrackDeals 读取
-                            // 但由于快车道逻辑是固定的，我们沿用之前的随机索引逻辑，或者直接随机抽一个
-                             card = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
+                            card = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
                         } else {
-                            // 慢车道：根据 AI 现金决定看大生意还是小生意
-                            // AI 现金 > 6000 且有机会买大生意时，优先看大生意
-                            const canAffordBig = this.state.ai.cash > 6000;
-                            // 70% 概率符合常理，30% 概率随机，模拟不同性格
-                            const wantBig = canAffordBig ? (Math.random() > 0.3) : false;
+                            // --- AI 智能增强 V2 ---
+                            // 1. 只有手头现金大于 $5000 且 现金流为正，才考虑大生意
+                            const canAffordBig = this.state.ai.cash > 5000 && this.state.ai.flow > 0;
+                            const wantBig = canAffordBig ? (Math.random() > 0.4) : false; // 60% 概率选大生意
                             
                             const deck = wantBig ? CONFIG.bigDeals : CONFIG.smallDeals;
-                            // **关键修改**：从真实配置中随机抽取一张卡
                             const rawCard = deck[Math.floor(Math.random() * deck.length)];
-                            card = { ...rawCard }; // 复制卡片数据
+                            card = { ...rawCard }; 
                         }
 
-                        // 分析卡片数据
-                        // 对于房产/企业，花费是 down (首付)；对于股票，花费是 cost * 数量
-                        // 简化 AI：遇到股票如果不便宜就不买，或者买一手；遇到资产看首付
-                        
                         let costToPay = 0;
                         let flowToGet = 0;
                         let dealName = card.name;
+                        let willBuy = false;
                         
                         if (card.type === 'Stock') {
-                            // AI 策略：如果是股票，随机买 100 到 500 股
-                            const qty = (Math.floor(Math.random() * 5) + 1) * 100;
-                            costToPay = card.cost * qty;
-                            flowToGet = 0; // 股票通常没有月现金流（除了优先股，但在配置里优先股是 Asset）
-                            dealName = `${card.symbol} (${qty}股)`;
+                            // AI 股票策略：
+                            // 如果价格低（小于范围中位数），大概率买；价格高，绝对不买
+                            // 简单的解析 '$5-$30' -> 5, 30
+                            const rangeParts = card.range ? card.range.replace(/\$/g, '').split('-') : [10, 20];
+                            const minPrice = parseInt(rangeParts[0]);
+                            const maxPrice = parseInt(rangeParts[1]);
+                            const midPrice = (minPrice + maxPrice) / 2;
+
+                            if (card.cost <= midPrice) {
+                                // 价格便宜，买！根据现金决定买多少
+                                const maxAfford = Math.floor(this.state.ai.cash / card.cost);
+                                // 只要能买且不超过 1000 股
+                                if (maxAfford > 0) {
+                                    const qty = Math.min(maxAfford, Math.floor(Math.random() * 5 + 1) * 100);
+                                    costToPay = card.cost * qty;
+                                    dealName = `${card.symbol} (${qty}股 @ $${card.cost})`;
+                                    willBuy = true;
+                                }
+                            }
                         } else {
-                            // 房产或企业
-                            costToPay = card.down || card.cost; // 优先用首付，没有首付则全款
+                            // 房产/企业
+                            costToPay = card.down || card.cost; 
                             flowToGet = card.flow || 0;
+                            
+                            // AI 房产策略：ROI 必须大于 0，且买完后手里最好留点钱（比如 $200），除非现金流增加很多
+                            if (this.state.ai.cash >= costToPay) {
+                                const remainingCash = this.state.ai.cash - costToPay;
+                                if (remainingCash > 200 || flowToGet > 200) {
+                                    willBuy = true;
+                                }
+                            }
                         }
 
-                        // AI 购买决策：买得起就买
-                        if (this.state.ai.cash >= costToPay) {
+                        if (willBuy) {
                             this.state.ai.cash -= costToPay;
-                            
-                            // 只有非股票类资产才增加现金流
                             if (card.type !== 'Stock') {
                                 this.state.ai.passive += flowToGet;
                                 this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
                             }
-                            
                             msg = `🏢 AI 投资了 ${dealName}<br><span class="text-xs opacity-70">花费 $${costToPay.toLocaleString()} · 流 +$${flowToGet}</span>`;
                         } else {
-                            msg = `👀 AI 看了看 ${dealName}，但买不起`;
+                            msg = `👀 AI 放弃了 ${dealName} <span class="text-[9px] opacity-50">(资金不足或风险过高)</span>`;
                         }
                     }
                     
