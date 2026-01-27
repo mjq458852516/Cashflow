@@ -245,13 +245,18 @@
             border: 1px solid #f1f5f9;
             transition: background-color 0.2s, border-color 0.2s;
         }
-        /* 深色模式适配：使用深灰背景，浅色边框 */
-        .dark .asset-row {
+        /* 修复：强制深色模式或位于深色弹窗内时的样式 */
+        .dark .asset-row, .glass-dark .asset-row {
             background: #1c1c1e; 
             border-color: rgba(255,255,255,0.1);
             box-shadow: none;
+            color: white; /* 确保文字变白 */
         }
         
+        /* 修复：强制修正列表内的文字颜色，防止看不清 */
+        .glass-dark .asset-row .text-slate-800 { color: white !important; }
+        .glass-dark .asset-row .text-slate-500 { color: #94a3b8 !important; }
+
         .asset-icon-circle {
             width: 42px; height: 42px; border-radius: 14px;
             background: #f8fafc; color: #475569;
@@ -259,7 +264,7 @@
             font-size: 20px; margin-right: 14px; flex-shrink: 0;
             border: 1px solid #e2e8f0;
         }
-        .dark .asset-icon-circle {
+        .dark .asset-icon-circle, .glass-dark .asset-icon-circle {
             background: #2c2c2e; color: #94a3b8; border-color: rgba(255,255,255,0.1);
         }
 
@@ -268,12 +273,12 @@
             text-transform: uppercase; letter-spacing: 0.05em;
             margin: 24px 0 10px 4px; display: flex; align-items: center; gap: 8px;
         }
-        .dark .section-label { color: #94a3b8; }
+        .dark .section-label, .glass-dark .section-label { color: #94a3b8; }
         
         .section-label::after {
             content: ''; flex: 1; height: 1px; background: #e2e8f0;
         }
-        .dark .section-label::after { background: rgba(255,255,255,0.1); }
+        .dark .section-label::after, .glass-dark .section-label::after { background: rgba(255,255,255,0.1); }
 
         /* 顶部总览小条 (替代原来的大卡片) */
         .mini-header {
@@ -1471,7 +1476,10 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 if (parts.length === 2) {
                     const min = parseInt(parts[0]);
                     const max = parseInt(parts[1]);
-                    const randomPrice = Math.floor(Math.random() * (max - min + 1)) + min;
+                    // 新逻辑：计算有多少个5的档位，随机选择一个档位，再乘回去
+                    const step = 5;
+                    const steps = Math.floor((max - min) / step);
+                    const randomPrice = min + (Math.floor(Math.random() * (steps + 1)) * step);
                     
                     card.cost = randomPrice;
                     
