@@ -229,6 +229,34 @@
         @media (prefers-color-scheme: dark) {
             #modal-overlay { background-color: rgba(0, 0, 0, 0.65); }
         }
+
+        /* --- 财务报表新样式 --- */
+        .sheet-section-title {
+            font-size: 13px; font-weight: 600; text-transform: uppercase;
+            color: #8E8E93; margin-bottom: 8px; margin-top: 20px; padding-left: 4px;
+            letter-spacing: 0.5px;
+        }
+        .sheet-card {
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(10px);
+            border-radius: 12px; padding: 14px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .dark .sheet-card { background: rgba(44, 44, 46, 0.6); border: 1px solid rgba(255,255,255,0.05); }
+        
+        .sheet-val-group { text-align: right; }
+        .sheet-val-primary { font-weight: 700; font-size: 15px; color: #1c1c1e; }
+        .dark .sheet-val-primary { color: white; }
+        .sheet-val-sub { font-size: 11px; color: #8E8E93; margin-top: 2px; }
+        
+        /* 选中态样式 */
+        .selectable-card { transition: all 0.2s; border: 2px solid transparent; cursor: pointer; }
+        .selectable-card.selected {
+            background: rgba(52, 199, 89, 0.1) !important;
+            border-color: #34C759 !important;
+        }
+        .dark .selectable-card.selected { background: rgba(48, 209, 88, 0.15) !important; }
+
     </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden text-slate-800 dark:text-slate-200 hardware-accel">
@@ -975,10 +1003,15 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }
         },
 
-        rollDice(diceCount) {
+                rollDice(diceCount) {
             if (this.state.isGameOver && !this.state.isFastTrack) return;
-            if (this.state.isAiTurn) { this.log("⏳ 请等待对手行动结束"); return; } // 新增这一行
+            if (this.state.isAiTurn) { this.log("⏳ 请等待对手行动结束"); return; }
             if (this.isMoving) return;
+
+            // --- 新增：立即锁定状态并清空按钮，防止连点和视觉延迟 ---
+            this.isMoving = true;
+            document.getElementById('dice-controls').innerHTML = ''; 
+            // -----------------------------------------------------
             
             const overlay = document.getElementById('modal-overlay');
             if ((!overlay.classList.contains('hidden')) || overlay.style.display === 'flex') {
@@ -1417,50 +1450,59 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             }, 100);
         },
 
-        handleMarket(card) {
+                handleMarket(card) {
             // 逻辑优化：如果是有人买房/企业
             if (card.type === 'Buyer') {
-                // 1. 找到所有符合条件的资产
                 const matchingAssets = this.state.assets.filter(a => a.name === card.target);
                 
                 if (matchingAssets.length > 0) {
-                   // 2. 生成一个列表 HTML，让用户在同一个弹窗里选择卖哪个
-                    let htmlList = `<div class="space-y-2 mt-4 max-h-[200px] overflow-y-auto">`;
+                    // 清空上次的选择
+                    this.state.tempSelectedAssets.clear();
+
+                    // 生成多选列表 HTML
+                    let htmlList = `<div class="space-y-2 mt-4 max-h-[220px] overflow-y-auto no-scrollbar py-1">`;
                     
                     matchingAssets.forEach(asset => {
                         const loan = asset.cost - asset.down;
-                        const netCash = card.price - loan;
-                        // UI 优化：添加圆圈图标，模拟 Radio Button 样式
+                        const profit = card.price - loan - asset.down; // 净赚 = 售价 - 银行贷款 - 你的首付
+                        
+                        // 注意：这里 onclick 调用了新函数 toggleAssetSelect
                         htmlList += `
-                            <button onclick="game.sellAssetDirect('${asset.id}', ${card.price})" 
-                                class="w-full flex items-center gap-3 p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl active:bg-green-50 dark:active:bg-green-900/20 active:border-green-500 transition-all group">
-                                
-                                <div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center group-active:border-green-500 group-active:bg-green-500 transition-colors">
-                                    <div class="w-2.5 h-2.5 bg-white rounded-full opacity-0 group-active:opacity-100"></div>
-                                </div>
-
-                                <div class="flex-1 flex justify-between items-center">
-                                    <div class="text-left">
-                                        <div class="font-bold text-slate-700 dark:text-slate-200">${asset.name}</div>
-                                        <div class="text-[10px] text-slate-400">成本: $${asset.cost.toLocaleString()}</div>
+                            <div id="asset-card-${asset.id}" onclick="game.toggleAssetSelect('${asset.id}', ${card.price}, this)" 
+                                class="selectable-card sheet-card mb-2 active:scale-[0.98]">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center select-indicator transition-colors">
+                                        <div class="w-2.5 h-2.5 bg-white rounded-full opacity-0"></div>
                                     </div>
-                                    <div class="text-right">
-                                        <div class="text-xs font-bold text-green-600 dark:text-green-400">赚 $${netCash.toLocaleString()}</div>
-                                        <div class="text-[10px] text-red-400">还贷 $${loan.toLocaleString()}</div>
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-800 dark:text-white">${asset.name}</div>
+                                        <div class="text-[10px] text-slate-400">贷款: $${loan.toLocaleString()}</div>
                                     </div>
                                 </div>
-                            </button>
+                                <div class="text-right">
+                                    <div class="font-bold text-green-600 text-sm">+$${profit.toLocaleString()}</div>
+                                    <div class="text-[10px] text-slate-400">净收益</div>
+                                </div>
+                            </div>
                         `;
                     });
-
                     htmlList += `</div>`;
+                    
+                    // 注入确认按钮区域
+                    htmlList += `
+                        <div class="pt-4 mt-2 border-t border-slate-100 dark:border-white/5">
+                            <button id="btn-multi-sell" onclick="game.executeMultiSell(${card.price})" disabled 
+                                class="w-full py-3 bg-slate-200 dark:bg-white/10 text-slate-400 rounded-2xl font-bold transition-all shadow-none">
+                                请选择要卖出的资产
+                            </button>
+                        </div>
+                    `;
 
-                    // 3. 弹出一个单一的窗口
                     this.queueEvent({
-                        type: 'INFO_ONLY', // 使用纯信息模式，因为操作按钮在 htmlList 里
+                        type: 'INFO_ONLY', 
                         data: {
-                            name: `市场收购: ${card.target}`,
-                            desc: `${card.desc}<br><div class="text-xs text-slate-400 mt-2">点击下方列表中的资产即可卖出：</div>${htmlList}`,
+                            name: `有人求购: ${card.target}`,
+                            desc: `${card.desc}<br><div class="text-xs text-slate-400 mt-1 mb-2">点击下方卡片选择（可多选）</div>${htmlList}`,
                             icon: '🤝'
                         }
                     });
@@ -1468,8 +1510,9 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     this.log(`📰 市场: ${card.desc} (你没有此资产)`);
                 }
             } 
-            // 股票逻辑保持不变，因为股票是同质化的，不需要选择卖哪一张
+            // 股票逻辑保持不变
             else if (card.type === 'PriceChange') {
+                // ... 保持原有代码不变 ...
                 const stocks = this.state.assets.filter(a => a.symbol === card.symbol && a.type === 'Stock');
                 if (stocks.length > 0) {
                     stocks.forEach(stock => {
@@ -1501,6 +1544,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 } else {
                     this.log(`📰 市场: ${card.symbol} 现价 $${card.price}`);
                 }
+                // ...
             }
             else if (card.type === 'Inflation') {
                 this.log(`📰 市场: ${card.desc}`);
@@ -1723,6 +1767,81 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 // 卖出一个后，关闭弹窗。如果想支持连续卖，可以重新触发handleMarket检测，这里简单处理直接关闭
                 this.closeModal();
             }
+        },
+
+        // --- 新增：处理点击选择 ---
+        toggleAssetSelect(id, price, el) {
+            const btn = document.getElementById('btn-multi-sell');
+            const indicator = el.querySelector('.select-indicator');
+            const innerDot = indicator.querySelector('div');
+
+            if (this.state.tempSelectedAssets.has(id)) {
+                // 取消选中
+                this.state.tempSelectedAssets.delete(id);
+                el.classList.remove('selected');
+                el.style.borderColor = 'transparent';
+                el.style.background = '';
+                
+                indicator.classList.remove('bg-green-500', 'border-green-500');
+                indicator.classList.add('border-slate-300', 'dark:border-slate-600');
+                innerDot.classList.remove('opacity-100');
+            } else {
+                // 选中
+                this.state.tempSelectedAssets.add(id);
+                el.classList.add('selected');
+                // 强制样式覆盖
+                indicator.classList.remove('border-slate-300', 'dark:border-slate-600');
+                indicator.classList.add('bg-green-500', 'border-green-500');
+                innerDot.classList.add('opacity-100');
+            }
+
+            // 更新按钮状态
+            const count = this.state.tempSelectedAssets.size;
+            if (count > 0) {
+                btn.disabled = false;
+                btn.innerHTML = `确认卖出 (${count}套)`;
+                btn.className = "w-full py-3 bg-green-600 text-white rounded-2xl font-bold shadow-lg shadow-green-200 dark:shadow-none tap-effect transition-all transform hover:scale-[1.02]";
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = `请选择要卖出的资产`;
+                btn.className = "w-full py-3 bg-slate-200 dark:bg-white/10 text-slate-400 rounded-2xl font-bold transition-all shadow-none";
+            }
+        },
+
+        // --- 新增：执行批量卖出 ---
+        executeMultiSell(unitPrice) {
+            const count = this.state.tempSelectedAssets.size;
+            if (count === 0) return;
+
+            let totalProfit = 0;
+            
+            // 遍历并卖出
+            // 倒序遍历防止 splice 索引错位，或者使用 filter 重建数组
+            // 这里我们使用 ID 查找法
+            const assetsToKeep = [];
+            
+            this.state.assets.forEach(asset => {
+                if (this.state.tempSelectedAssets.has(asset.id)) {
+                    const loan = asset.cost - asset.down;
+                    const netCash = unitPrice - loan;
+                    
+                    this.state.cash += netCash;
+                    if (asset.flow) this.state.passive -= asset.flow;
+                    
+                    totalProfit += (netCash - asset.down); // 统计纯利润用于展示
+                } else {
+                    assetsToKeep.push(asset);
+                }
+            });
+
+            this.state.assets = assetsToKeep;
+            this.state.tempSelectedAssets.clear();
+
+            this.log(`💰 成功卖出 ${count} 处资产，现金大幅回流！`);
+            this.checkWinCondition();
+            this.updateUI();
+            this.renderSheet('paper'); // 刷新报表
+            this.closeModal(); // 关闭弹窗
         },
 
         checkWinCondition() {
@@ -1993,122 +2112,129 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             this.renderSheet(tab);
         },
 
-        renderSheet(tab) {
+                renderSheet(tab) {
+            // 更新顶部统计数据
             document.getElementById('sheet-loan').innerText = '$' + this.state.loan.toLocaleString();
             document.getElementById('sheet-interest').innerText = '$' + (this.state.loan * 0.1).toLocaleString();
             document.getElementById('sheet-kids').innerText = this.state.childCount;
             document.getElementById('sheet-kid-cost').innerText = this.childExpense.toLocaleString();
 
+            const container = (tab === 'paper') ? document.getElementById('sheet-content') : document.getElementById('liabilities-list');
+            container.innerHTML = '';
+
             if (tab === 'paper') {
-                const container = document.getElementById('sheet-content');
-                container.innerHTML = '';
                 if (this.state.assets.length === 0) {
-                    container.innerHTML = '<div class="text-white/30 text-center py-24 text-xs">暂无资产</div>';
-                } else {
-                    const mergeList = ['金币收藏', '优先股分红', '银行定期存单'];
-                    const mergedCounts = {};
-                
-                    this.state.assets.forEach(asset => {
-                        if (mergeList.includes(asset.name)) {
-                            if (!mergedCounts[asset.name]) {
-                                mergedCounts[asset.name] = { 
-                                    ...asset, 
-                                    count: 1, 
-                                    totalFlow: asset.flow,
-                                    totalVal: asset.down 
-                                };
-                        } else {
-                            mergedCounts[asset.name].count++;
-                            mergedCounts[asset.name].totalFlow += asset.flow;
-                            mergedCounts[asset.name].totalVal += asset.down;
-                        }
-                    }
-                });
+                    container.innerHTML = '<div class="text-slate-400 text-center py-24 text-sm font-medium">暂无投资资产</div>';
+                    return;
+                }
 
-                    const renderItem = (asset, isMerged = false) => {
-                        const isStock = asset.type === 'Stock';
-                        const badge = isStock ? 'Stock' : (isMerged ? 'Asset' : 'Biz/Real');
-                    
-                        let valStr = '';
-                        let titleStr = asset.name;
-
-                        if (isMerged) {
-                            titleStr = `${asset.name} <span class="text-yellow-400/80 text-xs ml-1">x${asset.count}</span>`;
-                            valStr = `总值 $${asset.totalVal.toLocaleString()} · 流 $${asset.totalFlow}/月`;
-                        } else if (isStock) {
-                            valStr = `${asset.quantity}股 (成本 $${Math.floor(asset.cost)})`;
-                        } else {
-                            valStr = `+$${asset.flow.toLocaleString()}/月`;
-                        }
-
-                        const actionBtn = (this.state.isFastTrack || isMerged) ? '' : `<button onclick="game.liquidateAsset('${asset.id}')" class="text-[10px] text-red-200 bg-red-500/20 px-2 py-1 rounded active:bg-red-500/40">卖出</button>`;
-
-                        const div = document.createElement('div');
-                        div.className = 'bg-white/10 p-3 rounded-2xl flex items-center justify-between text-white text-sm border border-white/5 mb-2';
-                        div.innerHTML = `
+                // 辅助函数：生成卡片 HTML
+                const createCard = (title, subTitle, flow, value, icon) => `
+                    <div class="sheet-card">
+                        <div class="flex items-center gap-3">
+                            <div class="text-2xl">${icon}</div>
                             <div>
-                                <div class="font-bold flex items-center gap-2">${titleStr} <span class="text-[10px] bg-white/20 px-1 rounded h-fit">${badge}</span></div>
-                                <div class="text-[10px] opacity-60 mt-0.5">${valStr}</div>
+                                <div class="font-bold text-sm text-slate-800 dark:text-white leading-tight">${title}</div>
+                                <div class="text-[11px] text-slate-500 mt-1">${subTitle}</div>
                             </div>
-                            ${actionBtn}
-                        `;
-                        container.appendChild(div);
-                    };
+                        </div>
+                        <div class="sheet-val-group">
+                            <div class="sheet-val-primary ${flow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}">
+                                ${flow > 0 ? '+' : ''}$${flow.toLocaleString()}<span class="text-[10px] opacity-60 font-normal">/月</span>
+                            </div>
+                            <div class="sheet-val-sub">值 $${value.toLocaleString()}</div>
+                        </div>
+                    </div>`;
 
-                    this.state.assets.forEach(asset => {
-                        if (!mergeList.includes(asset.name)) {
-                            renderItem(asset, false);
-                        }
+                // 1. 股票/基金 (同名合并显示)
+                const stocks = this.state.assets.filter(a => a.type === 'Stock');
+                if (stocks.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">股票 & 基金</div>`;
+                    const stockMap = {};
+                    stocks.forEach(s => {
+                        if(!stockMap[s.symbol]) stockMap[s.symbol] = { ...s, totalQty: 0, totalCost: 0 };
+                        stockMap[s.symbol].totalQty += s.quantity;
+                        stockMap[s.symbol].totalCost += (s.cost * s.quantity);
                     });
-                
-                    Object.values(mergedCounts).forEach(item => {
-                        renderItem(item, true);
+                    
+                    Object.values(stockMap).forEach(s => {
+                        const avgCost = Math.floor(s.totalCost / s.totalQty);
+                        container.innerHTML += createCard(
+                            `${s.symbol} <span class="text-xs opacity-50 ml-1">x${s.totalQty}</span>`,
+                            `均价成本 $${avgCost}`,
+                            0, // 股票通常不算月现金流，或者你可以算预期分红
+                            s.totalCost, // 显示总成本作为价值参考
+                            '📈'
+                        );
                     });
-            } 
-        } else if (tab === 'debt') {
-                const list = document.getElementById('liabilities-list');
-                list.innerHTML = '';
-                
-                const fixedDiv = document.createElement('div');
-                fixedDiv.className = 'debt-item text-white opacity-60';
-                fixedDiv.style.background = 'transparent';
-                fixedDiv.style.border = 'none';
-                fixedDiv.innerHTML = `
-                    <div><div class="font-bold">税收 & 其他</div><div class="text-[10px]">-$${(this.state.basicTax + this.state.otherExpense).toLocaleString()}/月 (固定)</div></div>
-                `;
-                list.appendChild(fixedDiv);
+                }
 
-                if (this.state.liabilities.length === 0) {
-                    list.innerHTML += '<div class="text-white/50 text-center py-4 text-xs">无生活负债 🎉</div>';
-                } else {
+                // 2. 房地产
+                const realEstate = this.state.assets.filter(a => a.type === 'RealEstate');
+                if (realEstate.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">房地产</div>`;
+                    realEstate.forEach(a => {
+                        container.innerHTML += createCard(a.name, `首付 $${a.down.toLocaleString()}`, a.flow, a.cost, '🏠');
+                    });
+                }
+
+                // 3. 企业
+                const business = this.state.assets.filter(a => a.type === 'Business');
+                if (business.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">企业 & 生意</div>`;
+                    business.forEach(a => {
+                        container.innerHTML += createCard(a.name, `投入 $${a.down.toLocaleString()}`, a.flow, a.cost, '🏢');
+                    });
+                }
+
+                // 4. 其他资产 (金币、存单等)
+                const others = this.state.assets.filter(a => !['Stock', 'RealEstate', 'Business'].includes(a.type));
+                if (others.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">硬资产 & 其他</div>`;
+                    others.forEach(a => {
+                        container.innerHTML += createCard(a.name, '对抗通胀', a.flow, a.down, '🪙');
+                    });
+                }
+                
+            } else if (tab === 'debt') {
+                 // 负债部分保持原有逻辑，但应用新的样式类
+                 const fixedCost = this.state.basicTax + this.state.otherExpense;
+                 container.innerHTML += `
+                    <div class="sheet-section-title">固定支出</div>
+                    <div class="sheet-card">
+                        <div class="flex items-center gap-3">
+                            <div class="text-xl">📉</div>
+                            <div class="font-bold text-sm text-slate-800 dark:text-white">税收 & 杂费</div>
+                        </div>
+                        <div class="sheet-val-primary text-slate-500">-$${fixedCost.toLocaleString()}<span class="text-[10px]">/月</span></div>
+                    </div>`;
+
+                 if (this.state.liabilities.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">贷款 & 债务</div>`;
                     this.state.liabilities.forEach(item => {
                         const div = document.createElement('div');
-                        div.className = 'debt-item text-white';
+                        div.className = 'sheet-card';
                         div.innerHTML = `
-                            <div><div class="font-bold">${item.name}</div><div class="text-[10px] opacity-60">-$${item.expense}/月</div></div>
-                            <button onclick="game.promptPayLiability('${item.id}')" class="px-2 py-1 bg-green-600 rounded text-xs active:scale-95 transition-transform">付 $${item.balance.toLocaleString()}</button>
+                            <div class="flex items-center gap-3">
+                                <div class="text-xl">💳</div>
+                                <div>
+                                    <div class="font-bold text-sm text-slate-800 dark:text-white">${item.name}</div>
+                                    <div class="text-[11px] text-red-500">剩余 $${item.balance.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <div class="sheet-val-primary text-slate-500">-$${item.expense}<span class="text-[10px]">/月</span></div>
+                                <button onclick="game.promptPayLiability('${item.id}')" class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold active:scale-95 transition-transform">还清</button>
+                            </div>
                         `;
-                        list.appendChild(div);
+                        container.appendChild(div);
                     });
-
-             const bankruptcyBtn = document.createElement('div');
-             bankruptcyBtn.className = 'mt-6';
-             bankruptcyBtn.innerHTML = `
-                 <button onclick="game.declareBankruptcy()" 
-                         class="w-full py-4 bg-red-600 dark:bg-red-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-red-900/30 tap-effect active:scale-95 transition-all flex items-center justify-center gap-2">
-                     ☠️ 宣布破产（结束游戏）
-                 </button>
-                 <div class="text-[10px] text-red-300 dark:text-red-400 text-center mt-2 opacity-70">
-                     当你觉得债务无法翻身时，可主动选择破产
-                 </div>
-             `;
-             list.appendChild(bankruptcyBtn);
-
-             const empty = document.createElement('div');
-             empty.className = 'h-10';
-             list.appendChild(empty);
-
-                }
+                 }
+                 
+                 // 添加破产按钮
+                 container.innerHTML += `<div class="h-8"></div>
+                 <button onclick="game.declareBankruptcy()" class="w-full py-3 bg-slate-100 dark:bg-white/5 text-red-500 rounded-xl font-bold text-sm">☠️ 宣布破产</button>
+                 <div class="h-10"></div>`;
             }
         },
 
