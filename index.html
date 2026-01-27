@@ -230,32 +230,46 @@
             #modal-overlay { background-color: rgba(0, 0, 0, 0.65); }
         }
 
-        /* --- 财务报表新样式 --- */
+        /* --- 财务报表 UI 重构 (Apple Wallet 风格) --- */
+        .sheet-header-card {
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            border-radius: 20px; padding: 20px; color: white;
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+            margin-bottom: 24px; position: relative; overflow: hidden;
+        }
+        .sheet-header-card::after {
+            content: ''; position: absolute; top: -50%; right: -20%;
+            width: 200px; height: 200px; background: rgba(255,255,255,0.1);
+            border-radius: 50%; blur: 20px; pointer-events: none;
+        }
+
         .sheet-section-title {
-            font-size: 13px; font-weight: 600; text-transform: uppercase;
-            color: #8E8E93; margin-bottom: 8px; margin-top: 20px; padding-left: 4px;
-            letter-spacing: 0.5px;
+            font-size: 17px; font-weight: 700; color: #1c1c1e;
+            margin-bottom: 12px; margin-top: 24px; padding-left: 4px;
+            display: flex; align-items: center; justify-content: space-between;
         }
+        .dark .sheet-section-title { color: white; }
+
         .sheet-card {
-            background: rgba(255,255,255,0.6); backdrop-filter: blur(10px);
-            border-radius: 12px; padding: 14px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(20px);
+            border-radius: 16px; padding: 16px; margin-bottom: 10px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.2s;
         }
-        .dark .sheet-card { background: rgba(44, 44, 46, 0.6); border: 1px solid rgba(255,255,255,0.05); }
-        
-        .sheet-val-group { text-align: right; }
-        .sheet-val-primary { font-weight: 700; font-size: 15px; color: #1c1c1e; }
-        .dark .sheet-val-primary { color: white; }
-        .sheet-val-sub { font-size: 11px; color: #8E8E93; margin-top: 2px; }
-        
-        /* 选中态样式 */
-        .selectable-card { transition: all 0.2s; border: 2px solid transparent; cursor: pointer; }
-        .selectable-card.selected {
-            background: rgba(52, 199, 89, 0.1) !important;
-            border-color: #34C759 !important;
+        .dark .sheet-card { 
+            background: rgba(44, 44, 46, 0.6); 
+            border: 1px solid rgba(255,255,255,0.08); 
         }
-        .dark .selectable-card.selected { background: rgba(48, 209, 88, 0.15) !important; }
+        .sheet-card:active { transform: scale(0.98); }
+
+        .asset-icon-box {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: #F2F2F7; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; margin-right: 12px;
+        }
+        .dark .asset-icon-box { background: rgba(255,255,255,0.1); }
 
     </style>
 </head>
@@ -619,19 +633,24 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         smallDeals: [
             { name: 'MYT4U 电子', symbol:'MYT4U', type: 'Stock', cost: 10, range: '$5-$30', desc: '股价 $10。长期在$5到$30之间波动。', icon: '📉', allowShort: false },
             { name: 'OK4U 医药', symbol:'OK4U', type: 'Stock', cost: 40, range: '$5-$40', desc: '股价 $40，处于历史高位。', icon: '⛰️', allowShort: false },
-            { name: 'ON2U 娱乐', symbol:'ON2U', type: 'Stock', cost: 5, range: '$5-$40', desc: '便士股票！价格仅为 $5，风险低，回报可能极高。', icon: '🚀', allowShort: false },
+            { name: '共同基金', symbol:'GRO4US', type: 'Stock', cost: 40, range: '$10-$30', desc: '市场的力量把基金的价格推到了很高的水平', icon: '🪽', allowShort: false },
+            { name: 'ON2U 娱乐', symbol:'ON2U', type: 'Stock', cost: 5, range: '$10-$30', desc: '公司对老电影的要求很高，股价不错。', icon: '🚀', allowShort: false },
             { name: '优先股分红', type: 'Asset', cost: 1200, down: 1200, flow: 10, desc: '电力公司优先股，提供稳定的10%年化回报。', icon: '📜' },
             { name: '银行定期存单', type: 'Asset', cost: 3000, down: 3000, flow: 15, desc: '低风险CD存单。', icon: '🏦' },
             { name: '2室1厅 公寓', type: 'RealEstate', cost: 45000, down: 4000, flow: 180, desc: '法拍屋。首付仅需$4000，ROI高达54%！', icon: '🏠' },
-            { name: '3室2厅 捡漏', type: 'RealEstate', cost: 65000, down: 5000, flow: 190, desc: '屋主急售。只需 $5,000 首付。现金流 +$190。', icon: '🏚️' },
-            { name: '金币收藏', type: 'Asset', cost: 500, down: 500, flow: 0, desc: '克鲁格金币。对抗通胀的硬通货，无现金流。', icon: '🪙' }
+            { name: '3室2卫', type: 'RealEstate', cost: 50000, down: 0, flow: -100, desc: '公路建设部出售旧区的房子，市场崩溃，上周无人投标。', icon: '🏠' },
+            { name: '3室2厅', type: 'RealEstate', cost: 50000, down: 4000, flow: 200, desc: '因就业市场不好，有一个很好的房子出售。在懂行的人手里，会是很好的投资', icon: '🏚️' },
+            { name: '稀有的金币', type: 'Asset', cost: 500, down: 500, flow: 0, desc: '在旧货市场上，你发现了一枚1500年西班牙皇家新世界币，卖家要500。', icon: '🪙' }
         ],
         bigDeals: [
-            { name: '3室2厅 豪宅', type: 'RealEstate', cost: 125000, down: 25000, flow: 400, desc: '地段优越。不错的现金流资产，增值空间大。', icon: '🏡' },
+            { name: '3室2卫', type: 'RealEstate', cost: 65000, down: 7000, flow: 150, desc: '生意人需要把这处房子卖掉，他需要现金挽救公司。', icon: '🏡' },
+            { name: '3室2卫', type: 'RealEstate', cost: 70000, down: 9000, flow: 300, desc: '破产经理必须卖掉这处房子，无法支付新的薪水过渡区。', icon: '🏡' },
             { name: '4单元 公寓', type: 'RealEstate', cost: 160000, down: 32000, flow: 800, desc: '4-Plex 小型公寓楼。现金流非常健康。', icon: '🏘️' },
             { name: '8单元 公寓', type: 'RealEstate', cost: 320000, down: 60000, flow: 2400, desc: '8-Plex。管理成本低，收益高。', icon: '🏢' },
             { name: '洗车房', type: 'Business', cost: 150000, down: 30000, flow: 1000, desc: '全自动洗车生意。需要较多首付。', icon: '🚗' },
+            { name: '自动洗衣店', type: 'Business', cost: 150000, down: 30000, flow: 2500, desc: '个人破产，出售繁华路段旁的自动洗衣店，无需业主看护。', icon: '🧺' },
             { name: '招合伙人', type: 'Business', cost: 20000, down: 20000, flow: 800, desc: '成功的披萨连锁企业想为食品店提供冰冻披萨。所有者需要有人入股。', icon: '🍕' },
+            { name: '招合伙人', type: 'Business', cost: 30000, down: 30000, flow: 1000, desc: '汽车零售商想扩张生意，收购2-3年的旧车，需要资金，而汽车厂商不感兴趣。', icon: '🚗' },
             { name: '家庭旅馆出售', type: 'RealEstate', cost: 150000, down: 30000, flow: 1000, desc: '业主退休，想立即转让。5室3卫', icon: '🏠' },
             { name: '3室2卫', type: 'RealEstate', cost: 115000, down: 10000, flow: -100, desc: '远离公路的高尔夫球场有3室2卫出售，附送高尔夫会员。', icon: '🏡' },
             { name: '12单元 公寓', type: 'RealEstate', cost: 350000, down: 50000, flow: 2400, desc: '业主继承人生活不好，想卖掉，很多人想租', icon: '🏨' },
@@ -652,6 +671,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             { type: 'PriceChange', symbol: 'ON2U', price: 40, desc: 'ON2U 电影票房大卖！股价飙升至 $40。' },
             { type: 'PriceChange', symbol: 'OK4U', price: 50, desc: 'OK4U 新药研发成功！股价涨至 $50。' },
             { type: 'Buyer', target: '3室2厅 捡漏', price: 135000, desc: '刚需买家出现！出价 $135k 购买3室2厅的房子。' },
+            { type: 'Buyer', target: '3室2卫', price: 135000, desc: '刚需买家出现！出价 $135k 购买3室2卫的房子。' },
             { type: 'Buyer', target: '2室1厅 公寓', price: 65000, desc: '投资客出价 $65k 收购所有2室1厅公寓。' },
             { type: 'Buyer', target: '4单元 公寓', price: 220000, desc: '公寓市场回暖。买家出价 $220k。' },
             { type: 'Inflation', desc: '通货膨胀！所有消费品价格上涨。' },
@@ -1021,8 +1041,11 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             if (this.state.downsizedTurns > 0) {
                 this.state.downsizedTurns--;
                 this.log(`🛋️ 停赛中... 还剩 ${this.state.downsizedTurns} 轮`);
+                
+                // 【修复】重置移动锁，否则按钮会一直灰显无法点击
+                this.isMoving = false; 
+                
                 this.updateUI();
-                // 关键修改：玩家停赛，直接触发 AI 回合，不需要玩家再点一次
                 setTimeout(() => this.runAiTurn(), 800);
                 return;
             }
@@ -1920,14 +1943,14 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     else if (tile.type === 'Opp' || tile.type === 'FT_Biz') {
                         let card = null;
                         
-                        // 即使玩家在快车道，如果 AI 在慢车道，AI 依然抽取慢车道卡牌
                         if (aiInFastTrack) {
                             card = CONFIG.fastTrackDeals[Math.floor(Math.random() * CONFIG.fastTrackDeals.length)];
                         } else {
-                            // AI 策略：有钱就看大生意，没钱看小生意
-                            // 稍微激进一点：现金 > 3000 就敢看大生意
-                            const canAffordBig = this.state.ai.cash > 3000 && this.state.ai.flow > 0;
-                            const wantBig = canAffordBig ? (Math.random() > 0.6) : false; 
+                            // 【AI 升级】更激进地查看大生意。只要现金流为正且手头有 $1500 就敢看大生意，利用银行杠杆。
+                            const aggressiveThreshold = 1500; 
+                            const canAffordBig = this.state.ai.cash > aggressiveThreshold;
+                            // 70% 概率看大生意，30% 看小生意（原来是随机）
+                            const wantBig = canAffordBig ? (Math.random() > 0.3) : false; 
                             const deck = wantBig ? CONFIG.bigDeals : CONFIG.smallDeals;
                             const rawCard = deck[Math.floor(Math.random() * deck.length)];
                             card = { ...rawCard }; 
@@ -1940,46 +1963,46 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         let loanNeeded = 0;
                         
                         if (card.type === 'Stock') {
-                            // 股票逻辑保持不变：低价买入，不贷款炒股
-                            const rangeParts = card.range ? card.range.replace(/\$/g, '').split('-') : [10, 20];
-                            const midPrice = (parseInt(rangeParts[0]) + parseInt(rangeParts[1])) / 2;
-
-                            if (card.cost <= midPrice) {
+                            // 【AI 升级】股票逻辑：只要价格在低位区间（低于最高价的 50%），就大举买入
+                            const rangeParts = card.range ? card.range.replace(/\$/g, '').split('-') : [10, 30];
+                            const highPrice = parseInt(rangeParts[1]);
+                            
+                            if (card.cost <= highPrice * 0.6) {
+                                // 即使借钱也要买低价股（模拟高风险偏好），但这里保守一点，只用现金
                                 const maxAfford = Math.floor(this.state.ai.cash / card.cost);
                                 if (maxAfford > 0) {
-                                    const qty = Math.min(maxAfford, Math.floor(Math.random() * 5 + 1) * 100);
-                                    costToPay = card.cost * qty;
-                                    dealName = `${card.symbol} (${qty}股)`;
-                                    willBuy = true;
+                                    // 梭哈 50% - 100% 的现金
+                                    const investRatio = 0.5 + (Math.random() * 0.5); 
+                                    const qty = Math.floor((this.state.ai.cash * investRatio) / card.cost / 100) * 100;
+                                    if (qty > 0) {
+                                        costToPay = card.cost * qty;
+                                        dealName = `${card.symbol} (${qty}股)`;
+                                        willBuy = true;
+                                    }
                                 }
                             }
                         } else {
-                            // === 修复 2: 房产/企业 - 智能借贷逻辑 ===
+                            // 【AI 升级】房产/企业逻辑
                             costToPay = card.down || card.cost; 
                             flowToGet = card.flow || 0;
                             
-                            // 计算缺口
                             const cashGap = costToPay - this.state.ai.cash;
                             
                             if (cashGap <= 0) {
-                                // 现金足够，看是否有正收益
-                                if (flowToGet > 0) willBuy = true;
+                                // 现金足够，只要有正收益就买，或者收益为0但首付极低（赌升值）
+                                if (flowToGet >= 0) willBuy = true;
                             } else {
-                                // 现金不足，计算贷款是否划算
-                                // 假设贷款利率 10% (游戏默认规则)
-                                // 借贷必须是 1000 的倍数，向上取整
+                                // 现金不足，计算贷款
                                 loanNeeded = Math.ceil(cashGap / 1000) * 1000;
                                 const monthlyInterest = loanNeeded * 0.1;
                                 const netFlow = flowToGet - monthlyInterest;
 
-                                // 只有当：扣除利息后依然赚钱，且赚得还不错 (比如 > $50)
-                                if (netFlow > 50) {
+                                // 【AI 核心策略】只要 (现金流 - 利息) > 0，这就叫“无限回报率”，必须买！
+                                // 即使 netFlow 只是 +$10，对于 AI 来说也是净赚。
+                                if (netFlow >= 0) {
                                     willBuy = true;
-                                    // 记录 AI 贷款行为
-                                    this.state.ai.expense += monthlyInterest; // 增加月支出
-                                    this.state.ai.cash += loanNeeded; // 获得贷款资金
-                                    // 注意：这里简化处理，没有记录 totalLoan 余额，只关注现金流变化
-                                    // 因为 AI 的胜利条件主要看现金流
+                                    this.state.ai.expense += monthlyInterest;
+                                    this.state.ai.cash += loanNeeded; 
                                 }
                             }
                         }
@@ -1988,17 +2011,16 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                             this.state.ai.cash -= costToPay;
                             if (card.type !== 'Stock') {
                                 this.state.ai.passive += flowToGet;
-                                // 重新计算月现金流：工资 + 被动 - 总支出
                                 this.state.ai.flow = (this.state.ai.salary + this.state.ai.passive) - this.state.ai.expense;
                             }
                             
                             let logTail = loanNeeded > 0 
-                                ? `<br><span class="text-red-400 font-bold">⚡️ 贷款买入! 贷$${loanNeeded/1000}k</span>` 
+                                ? `<br><span class="text-red-400 font-bold">⚡️ 激进融资 $${loanNeeded/1000}k</span>` 
                                 : `<br><span class="text-xs opacity-70">全款拿下</span>`;
 
-                            msg = `🏢 AI 投资了 ${dealName}${logTail}`;
+                            msg = `🏢 AI 拿下了 ${dealName}${logTail}`;
                         } else {
-                            msg = `👀 AI 放弃了 ${dealName} <span class="text-[9px] opacity-50">(ROI过低)</span>`;
+                            msg = `👀 AI 放弃了 ${dealName} <span class="text-[9px] opacity-50">(无利可图)</span>`;
                         }
                     }
                     
@@ -2113,7 +2135,7 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
         },
 
                 renderSheet(tab) {
-            // 更新顶部统计数据
+            // 更新顶部统计数据 DOM (虽然这部分UI可能被我们的新设计覆盖，但为了兼容性保留赋值)
             document.getElementById('sheet-loan').innerText = '$' + this.state.loan.toLocaleString();
             document.getElementById('sheet-interest').innerText = '$' + (this.state.loan * 0.1).toLocaleString();
             document.getElementById('sheet-kids').innerText = this.state.childCount;
@@ -2122,34 +2144,82 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             const container = (tab === 'paper') ? document.getElementById('sheet-content') : document.getElementById('liabilities-list');
             container.innerHTML = '';
 
+            // --- 顶部仪表盘 (仅在投资页显示) ---
+            if (tab === 'paper') {
+                const totalAssetValue = this.state.assets.reduce((sum, a) => sum + (a.cost * (a.quantity || 1)), 0);
+                const monthlyFlow = this.monthlyFlow;
+                
+                container.innerHTML += `
+                    <div class="sheet-header-card">
+                        <div class="text-white/80 text-xs font-medium uppercase tracking-wider mb-1">月净现金流</div>
+                        <div class="text-4xl font-bold mb-4 tracking-tight">$${monthlyFlow.toLocaleString()}</div>
+                        <div class="flex gap-4">
+                            <div>
+                                <div class="text-white/60 text-[10px] font-bold uppercase">被动收入</div>
+                                <div class="font-semibold text-lg">$${this.state.passive.toLocaleString()}</div>
+                            </div>
+                             <div>
+                                <div class="text-white/60 text-[10px] font-bold uppercase">资产总值</div>
+                                <div class="font-semibold text-lg">$${totalAssetValue.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             if (tab === 'paper') {
                 if (this.state.assets.length === 0) {
-                    container.innerHTML = '<div class="text-slate-400 text-center py-24 text-sm font-medium">暂无投资资产</div>';
+                    container.innerHTML += `
+                        <div class="flex flex-col items-center justify-center py-12 opacity-50">
+                            <div class="text-5xl mb-4 grayscale">🌱</div>
+                            <div class="text-sm font-medium">暂无资产，开始投资吧</div>
+                        </div>`;
                     return;
                 }
 
-                // 辅助函数：生成卡片 HTML
-                const createCard = (title, subTitle, flow, value, icon) => `
+                // 卡片生成器 (新设计)
+                const createCard = (title, subTitle, flow, value, icon, badge = '') => `
                     <div class="sheet-card">
-                        <div class="flex items-center gap-3">
-                            <div class="text-2xl">${icon}</div>
-                            <div>
-                                <div class="font-bold text-sm text-slate-800 dark:text-white leading-tight">${title}</div>
-                                <div class="text-[11px] text-slate-500 mt-1">${subTitle}</div>
+                        <div class="flex items-center flex-1 min-w-0">
+                            <div class="asset-icon-box flex-shrink-0">${icon}</div>
+                            <div class="truncate pr-2">
+                                <div class="font-bold text-[15px] text-slate-800 dark:text-white truncate">
+                                    ${title} ${badge ? `<span class="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-[9px] px-1.5 py-0.5 rounded ml-1 align-middle">${badge}</span>` : ''}
+                                </div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">${subTitle}</div>
                             </div>
                         </div>
-                        <div class="sheet-val-group">
-                            <div class="sheet-val-primary ${flow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}">
-                                ${flow > 0 ? '+' : ''}$${flow.toLocaleString()}<span class="text-[10px] opacity-60 font-normal">/月</span>
+                        <div class="text-right flex-shrink-0">
+                            <div class="font-bold text-[15px] ${flow > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}">
+                                ${flow > 0 ? '+' : ''}$${flow.toLocaleString()}
                             </div>
-                            <div class="sheet-val-sub">值 $${value.toLocaleString()}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">月现金流</div>
                         </div>
                     </div>`;
 
-                // 1. 股票/基金 (同名合并显示)
+                // 1. 房地产 (RealEstate)
+                const realEstate = this.state.assets.filter(a => a.type === 'RealEstate');
+                if (realEstate.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">房地产 <span class="text-xs font-normal text-slate-400">${realEstate.length} 处</span></div>`;
+                    realEstate.forEach(a => {
+                        const equity = a.cost - a.down; // 粗略计算负债
+                        container.innerHTML += createCard(a.name, `首付 $${a.down.toLocaleString()} · 贷 $${equity.toLocaleString()}`, a.flow, a.cost, '🏠');
+                    });
+                }
+
+                // 2. 企业 (Business)
+                const business = this.state.assets.filter(a => a.type === 'Business');
+                if (business.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">企业/生意</div>`;
+                    business.forEach(a => {
+                        container.innerHTML += createCard(a.name, `投入成本 $${a.down.toLocaleString()}`, a.flow, a.cost, '🏢');
+                    });
+                }
+
+                // 3. 股票/基金 (Stock) - 合并显示
                 const stocks = this.state.assets.filter(a => a.type === 'Stock');
                 if (stocks.length > 0) {
-                    container.innerHTML += `<div class="sheet-section-title">股票 & 基金</div>`;
+                    container.innerHTML += `<div class="sheet-section-title">有价证券</div>`;
                     const stockMap = {};
                     stocks.forEach(s => {
                         if(!stockMap[s.symbol]) stockMap[s.symbol] = { ...s, totalQty: 0, totalCost: 0 };
@@ -2160,81 +2230,101 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     Object.values(stockMap).forEach(s => {
                         const avgCost = Math.floor(s.totalCost / s.totalQty);
                         container.innerHTML += createCard(
-                            `${s.symbol} <span class="text-xs opacity-50 ml-1">x${s.totalQty}</span>`,
-                            `均价成本 $${avgCost}`,
-                            0, // 股票通常不算月现金流，或者你可以算预期分红
-                            s.totalCost, // 显示总成本作为价值参考
-                            '📈'
+                            s.symbol,
+                            `持有 ${s.totalQty} 股 · 均价 $${avgCost}`,
+                            0, 
+                            s.totalCost, 
+                            '📈',
+                            '股票'
                         );
                     });
                 }
 
-                // 2. 房地产
-                const realEstate = this.state.assets.filter(a => a.type === 'RealEstate');
-                if (realEstate.length > 0) {
-                    container.innerHTML += `<div class="sheet-section-title">房地产</div>`;
-                    realEstate.forEach(a => {
-                        container.innerHTML += createCard(a.name, `首付 $${a.down.toLocaleString()}`, a.flow, a.cost, '🏠');
-                    });
-                }
-
-                // 3. 企业
-                const business = this.state.assets.filter(a => a.type === 'Business');
-                if (business.length > 0) {
-                    container.innerHTML += `<div class="sheet-section-title">企业 & 生意</div>`;
-                    business.forEach(a => {
-                        container.innerHTML += createCard(a.name, `投入 $${a.down.toLocaleString()}`, a.flow, a.cost, '🏢');
-                    });
-                }
-
-                // 4. 其他资产 (金币、存单等)
+                // 4. 其他资产
                 const others = this.state.assets.filter(a => !['Stock', 'RealEstate', 'Business'].includes(a.type));
                 if (others.length > 0) {
-                    container.innerHTML += `<div class="sheet-section-title">硬资产 & 其他</div>`;
+                    container.innerHTML += `<div class="sheet-section-title">其他资产</div>`;
                     others.forEach(a => {
-                        container.innerHTML += createCard(a.name, '对抗通胀', a.flow, a.down, '🪙');
+                        container.innerHTML += createCard(a.name, '硬通货/收藏品', a.flow, a.down, '🪙');
                     });
                 }
                 
+                // 底部留白，防止被手机Home条遮挡
+                container.innerHTML += '<div class="h-24"></div>';
+
             } else if (tab === 'debt') {
-                 // 负债部分保持原有逻辑，但应用新的样式类
                  const fixedCost = this.state.basicTax + this.state.otherExpense;
+                 const childCost = this.childExpense;
+
+                 // 固定支出卡片
                  container.innerHTML += `
-                    <div class="sheet-section-title">固定支出</div>
+                    <div class="sheet-header-card" style="background: linear-gradient(135deg, #FF3B30, #FF9500);">
+                        <div class="text-white/80 text-xs font-medium uppercase tracking-wider mb-1">月总支出</div>
+                        <div class="text-4xl font-bold mb-1 tracking-tight">-$${this.totalExpense.toLocaleString()}</div>
+                        <div class="text-white/60 text-[11px]">包含税费、贷款利息及抚养费</div>
+                    </div>
+                    
+                    <div class="sheet-section-title">刚性支出</div>
                     <div class="sheet-card">
                         <div class="flex items-center gap-3">
-                            <div class="text-xl">📉</div>
-                            <div class="font-bold text-sm text-slate-800 dark:text-white">税收 & 杂费</div>
+                            <div class="asset-icon-box text-slate-500">📉</div>
+                            <div>
+                                <div class="font-bold text-[15px] text-slate-800 dark:text-white">税收 & 杂费</div>
+                                <div class="text-[11px] text-slate-500">基本生活成本</div>
+                            </div>
                         </div>
-                        <div class="sheet-val-primary text-slate-500">-$${fixedCost.toLocaleString()}<span class="text-[10px]">/月</span></div>
-                    </div>`;
+                        <div class="font-bold text-[15px] text-slate-800 dark:text-white">-$${fixedCost.toLocaleString()}</div>
+                    </div>
+                 `;
 
-                 if (this.state.liabilities.length > 0) {
-                    container.innerHTML += `<div class="sheet-section-title">贷款 & 债务</div>`;
-                    this.state.liabilities.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'sheet-card';
-                        div.innerHTML = `
+                 if (childCost > 0) {
+                     container.innerHTML += `
+                        <div class="sheet-card">
                             <div class="flex items-center gap-3">
-                                <div class="text-xl">💳</div>
+                                <div class="asset-icon-box text-pink-500">👶</div>
                                 <div>
-                                    <div class="font-bold text-sm text-slate-800 dark:text-white">${item.name}</div>
-                                    <div class="text-[11px] text-red-500">剩余 $${item.balance.toLocaleString()}</div>
+                                    <div class="font-bold text-[15px] text-slate-800 dark:text-white">子女抚养费</div>
+                                    <div class="text-[11px] text-slate-500">${this.state.childCount} 个孩子</div>
                                 </div>
                             </div>
-                            <div class="flex flex-col items-end gap-2">
-                                <div class="sheet-val-primary text-slate-500">-$${item.expense}<span class="text-[10px]">/月</span></div>
-                                <button onclick="game.promptPayLiability('${item.id}')" class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold active:scale-95 transition-transform">还清</button>
+                            <div class="font-bold text-[15px] text-slate-800 dark:text-white">-$${childCost.toLocaleString()}</div>
+                        </div>
+                     `;
+                 }
+
+                 if (this.state.liabilities.length > 0) {
+                    container.innerHTML += `<div class="sheet-section-title">可偿还债务 <span class="text-xs font-normal text-slate-400">点击还清</span></div>`;
+                    this.state.liabilities.forEach(item => {
+                        // 使用 div 包裹按钮，实现点击整行还款（用户体验更好）
+                        const div = document.createElement('div');
+                        div.className = 'sheet-card tap-effect';
+                        div.onclick = () => game.promptPayLiability(item.id);
+                        div.innerHTML = `
+                            <div class="flex items-center flex-1">
+                                <div class="asset-icon-box text-red-500">💳</div>
+                                <div>
+                                    <div class="font-bold text-[15px] text-slate-800 dark:text-white">${item.name}</div>
+                                    <div class="text-[11px] text-red-500 font-medium">欠款 $${item.balance.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-[15px] text-slate-800 dark:text-white">-$${item.expense}</div>
+                                <div class="text-[10px] text-blue-500 font-bold mt-0.5">点击还款 ></div>
                             </div>
                         `;
                         container.appendChild(div);
                     });
+                 } else {
+                     container.innerHTML += `<div class="p-6 text-center text-slate-400 text-sm">🎉 太棒了，你没有任何坏账！</div>`;
                  }
                  
-                 // 添加破产按钮
-                 container.innerHTML += `<div class="h-8"></div>
-                 <button onclick="game.declareBankruptcy()" class="w-full py-3 bg-slate-100 dark:bg-white/5 text-red-500 rounded-xl font-bold text-sm">☠️ 宣布破产</button>
-                 <div class="h-10"></div>`;
+                 // 破产按钮
+                 container.innerHTML += `
+                    <div class="h-12"></div>
+                    <button onclick="game.declareBankruptcy()" class="w-full py-4 bg-slate-100 dark:bg-white/5 text-red-500 rounded-2xl font-bold text-sm shadow-sm active:scale-95 transition-all">
+                        ☠️ 宣布破产
+                    </button>
+                    <div class="h-24"></div>`;
             }
         },
 
