@@ -1424,27 +1424,35 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                 const matchingAssets = this.state.assets.filter(a => a.name === card.target);
                 
                 if (matchingAssets.length > 0) {
-                    // 2. 生成一个列表 HTML，让用户在同一个弹窗里选择卖哪个
+                   // 2. 生成一个列表 HTML，让用户在同一个弹窗里选择卖哪个
                     let htmlList = `<div class="space-y-2 mt-4 max-h-[200px] overflow-y-auto">`;
                     
                     matchingAssets.forEach(asset => {
                         const loan = asset.cost - asset.down;
                         const netCash = card.price - loan;
-                        // 利用 onclick 直接调用我们刚才写的新函数
+                        // UI 优化：添加圆圈图标，模拟 Radio Button 样式
                         htmlList += `
                             <button onclick="game.sellAssetDirect('${asset.id}', ${card.price})" 
-                                class="w-full flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl active:bg-green-100 transition-colors">
-                                <div class="text-left">
-                                    <div class="font-bold text-slate-700 dark:text-green-100">${asset.name}</div>
-                                    <div class="text-[10px] text-slate-500 dark:text-green-200/70">买入成本: $${asset.cost.toLocaleString()}</div>
+                                class="w-full flex items-center gap-3 p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl active:bg-green-50 dark:active:bg-green-900/20 active:border-green-500 transition-all group">
+                                
+                                <div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center group-active:border-green-500 group-active:bg-green-500 transition-colors">
+                                    <div class="w-2.5 h-2.5 bg-white rounded-full opacity-0 group-active:opacity-100"></div>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-xs font-bold text-green-600 dark:text-green-400">净赚: $${netCash.toLocaleString()}</div>
-                                    <div class="text-[10px] text-red-400">需还贷: $${loan.toLocaleString()}</div>
+
+                                <div class="flex-1 flex justify-between items-center">
+                                    <div class="text-left">
+                                        <div class="font-bold text-slate-700 dark:text-slate-200">${asset.name}</div>
+                                        <div class="text-[10px] text-slate-400">成本: $${asset.cost.toLocaleString()}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-bold text-green-600 dark:text-green-400">赚 $${netCash.toLocaleString()}</div>
+                                        <div class="text-[10px] text-red-400">还贷 $${loan.toLocaleString()}</div>
+                                    </div>
                                 </div>
                             </button>
                         `;
                     });
+
                     htmlList += `</div>`;
 
                     // 3. 弹出一个单一的窗口
@@ -2215,8 +2223,12 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'center' }), 10);
                     }
                 }
-                // 渲染 AI
-                if (idx === this.state.ai.pos) {
+                // 渲染 AI (修复：只有当 AI 所在的世界与当前显示的地图一致时才渲染)
+                // 如果当前显示快车道(state.isFastTrack)，但 AI 没进快车道(ai.isFastTrack 默认为 undefined 或 false)，则不显示 AI
+                const aiIsFast = !!this.state.ai.isFastTrack;
+                const playerIsFast = !!this.state.isFastTrack;
+
+                if (idx === this.state.ai.pos && aiIsFast === playerIsFast) {
                     div.innerHTML += `<div class="ai-token"></div>`;
                 }
                 
