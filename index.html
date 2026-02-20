@@ -755,8 +755,10 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             downsizedTurns: 0, 
             charityTurns: 0, 
             eventQueue: [],
+            tempSelectedAssets: new Set(), 
             fastTrackCharityTurns: 0, 
             fastTrackBiz: {}, 
+ 
             
             jobTitle: '',
             jobIcon: '',
@@ -1225,7 +1227,9 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         this.log(`🛋️ 失业：支付账单并停赛2轮`);
                         this.updateUI();
                         if (this.state.cash < 0) this.checkBankruptcy();
+                        setTimeout(() => this.runAiTurn(), 1500);
                         break;
+
                 }
             }
         },
@@ -1237,7 +1241,9 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
             switch(tile.type) {
                 case 'FT_Pay':
                     this.payDay();
+                    setTimeout(() => this.runAiTurn(), 1000);
                     break;
+
 
                 case 'FT_Biz':
                     // 1. 检查是否已经买过这个格子的生意
@@ -1321,7 +1327,9 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                         this.state.cash -= cost;
                     }
                     this.updateUI();
+                    setTimeout(() => this.runAiTurn(), 1500);
                     break;
+
             }
         },
 
@@ -2076,8 +2084,19 @@ const uuid = () => Date.now().toString(36) + Math.random().toString(36).substr(2
                     
                     // === 情况 C: 额外支出 ===
                     else if (tile.type === 'Doodad' || tile.type === 'FT_Hazard') {
-                        const doodad = CONFIG.doodads[Math.floor(Math.random() * CONFIG.doodads.length)];
-                        const cost = doodad.cost;
+                        let cost = 0;
+                        let doodadName = '';
+                        
+                        if (tile.type === 'FT_Hazard') {
+                            if (tile.effect === 'audit') { cost = Math.floor(this.state.ai.cash / 2); doodadName = '税务审计'; }
+                            else if (tile.effect === 'divorce') { cost = this.state.ai.cash; doodadName = '离婚'; }
+                            else if (tile.effect === 'lawsuit') { cost = Math.floor(this.state.ai.cash / 2); doodadName = '官司'; }
+                        } else {
+                            const doodad = CONFIG.doodads[Math.floor(Math.random() * CONFIG.doodads.length)];
+                            cost = doodad.cost;
+                            doodadName = doodad.name;
+                        }
+
                         
                         if (this.state.ai.cash >= cost) {
                             this.state.ai.cash -= cost;
